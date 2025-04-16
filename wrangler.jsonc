@@ -1,0 +1,10 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "lunch-scraper",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-04-15",
+	"observability": {
+		"enabled": true
+	},
+	"minify": true,
+}
