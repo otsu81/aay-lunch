@@ -1,0 +1,18 @@
+{
+  "extends": "./node_modules/gts/",
+  "rules": {
+    "n/no-unpublished-import": "off",
+    "n/no-unsupported-features/node-builtins": ["error",{
+      "version": ">=20",
+      "ignores": []
+    }]
+  },
+  "overrides": [
+    {
+      "files": ["**/test*/*"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": 0
+      }
+    }
+  ]
+}
