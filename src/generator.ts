@@ -1,4 +1,4 @@
-import { Db } from "./db"
+import { Db } from './db'
 
 export class Generator {
   constructor(private db: Db) {}
@@ -11,17 +11,12 @@ export class Generator {
         <body>
           <table border="0" cellpadding="4" cellspacing="0">
             <tbody>
-              ${results
-                .map(
-                  (r) =>
-                    `<tr><td>${r.name}: </td><td>${r.dish}</td></tr>`
-                )
-                .join('\n')}
+              ${results.map((r) => `<tr><td>${r.name}: </td><td>${r.dish}</td></tr>`).join('\n')}
             </tbody>
           </table>
         </body>
       </html>
-    `    
-  return html
+    `
+    return html
   }
 }
