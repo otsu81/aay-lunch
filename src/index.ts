@@ -1,22 +1,44 @@
 import { Hono } from 'hono'
+import { Db } from './db'
+import { Generator } from './generator'
 import { Clemens } from './restaurants/clemens'
+import { MiaMarias } from './restaurants/miamaria'
+import { Restaurant } from './restaurants/restaurant'
 
-interface Env{}
+interface Env {
+  db: D1Database
+}
 
-const hono = new Hono<{Bindings: Env}>()
-const clem = new Clemens('https://www.clemenskott.se/restaurang/')
-const weekday = new Date().toLocaleString('en-US', {
-	timeZone: 'Europe/Stockholm',
-	weekday: 'short',
+const hono = new Hono<{ Bindings: Env }>()
+
+const weekday = new Date()
+  .toLocaleString('en-US', {
+    timeZone: 'Europe/Stockholm',
+    weekday: 'short',
+  })
+  .toLowerCase()
+
+hono.get('/refresh', async (c) => {
+  const resDb = new Db(c.env.db)
+  const restaurants = new Set<Restaurant>()
+  restaurants.add(new Clemens(0))
+  restaurants.add(new MiaMarias(1))
+
+  const promises = Array.from(restaurants).map((r) => resDb.refreshMenu(r))
+  const resolved = await Promise.all(promises)
+
+  return c.json(resolved)
 })
 
-console.log(weekday.toLowerCase())
 hono.get('/', async (c) => {
-	await clem.generateMenu()
+  if (weekday === 'sat' || weekday === 'sun') {
+    return c.text("go home and be a family man, there's no lunch menu on weekends")
+  }
+  const resDb = new Db(c.env.db)
+  const gen = new Generator(resDb)
+  const todaysMenu = await gen.generateWeekdayMenu(weekday)
 
-	const todaysMenu = await clem.getDayMenu(weekday)
-
-	return c.text(todaysMenu)
+  return c.html(todaysMenu)
 })
 
 export default hono
