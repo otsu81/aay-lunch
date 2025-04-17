@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { Db } from './db'
 import { Generator } from './generator'
 import { Clemens } from './restaurants/clemens'
+import { MiaMarias } from './restaurants/miamaria'
 import { Restaurant } from './restaurants/restaurant'
 
 interface Env {
@@ -19,11 +20,14 @@ const weekday = new Date()
 
 hono.get('/refresh', async (c) => {
   const resDb = new Db(c.env.db)
-  const restaurants = new Map<number, Restaurant>()
-  const clem = new Clemens(0)
-  restaurants.set(0, clem)
-  const menu = await resDb.refreshMenu(clem)
-  return c.json(menu)
+  const restaurants = new Set<Restaurant>()
+  restaurants.add(new Clemens(0))
+  restaurants.add(new MiaMarias(1))
+
+  const promises = Array.from(restaurants).map((r) => resDb.refreshMenu(r))
+  const resolved = await Promise.all(promises)
+
+  return c.json(resolved)
 })
 
 hono.get('/', async (c) => {
@@ -33,8 +37,6 @@ hono.get('/', async (c) => {
   const resDb = new Db(c.env.db)
   const gen = new Generator(resDb)
   const todaysMenu = await gen.generateWeekdayMenu(weekday)
-
-  const hell = 'non'
 
   return c.html(todaysMenu)
 })
