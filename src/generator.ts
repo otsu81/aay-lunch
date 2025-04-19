@@ -45,17 +45,12 @@ export class Generator {
       <body>
         <table>
           <tbody>
-            ${results
-              .map(
-                (r) =>
-                  `<tr><td>${r.name}:</td><td>${r.dish}</td></tr>`
-              )
-              .join('\n')}
+            ${results.map((r) => `<tr><td><a href="${r.url}">${r.name}</a>:</td><td>${r.dish}</td></tr>`).join('\n')}
           </tbody>
         </table>
       </body>
     </html>
-  `
-      return html
+    `
+    return html
   }
 }
