@@ -12,13 +12,12 @@ interface Env {
 
 const hono = new Hono<{ Bindings: Env }>()
 
-// const weekday = new Date()
-//   .toLocaleString('en-US', {
-//     timeZone: 'Europe/Stockholm',
-//     weekday: 'short',
-//   })
-//   .toLowerCase()
-const weekday = 'tue'
+const weekday = new Date()
+  .toLocaleString('en-US', {
+    timeZone: 'Europe/Stockholm',
+    weekday: 'short',
+  })
+  .toLowerCase()
 
 hono.get('/refresh', async (c) => {
   const resDb = new Db(c.env.db)
