@@ -29,7 +29,7 @@ export class Db {
       .prepare(
         `
         INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri)
-        VALUES (?, ?, ?, ?, ?, ?)  
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(restaurant_id) DO UPDATE SET
           mon=excluded.mon,
           tue=excluded.tue,
@@ -56,7 +56,7 @@ export class Db {
     const { results } = await this.db
       .prepare(
         `
-        SELECT r.name, m.${weekday} AS dish
+        SELECT r.name, r.url, m.${weekday} AS dish
         FROM restaurants r
         JOIN menus m ON r.id = m.restaurant_id
         WHERE m.${weekday} IS NOT NULL AND m.${weekday} != ''
