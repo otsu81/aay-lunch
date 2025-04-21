@@ -1,21 +1,21 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "lunch-scraper",
-	"main": "src/index.ts",
-	"compatibility_date": "2025-04-15",
-	"observability": {
-		"enabled": true
-	},
-	"minify": true,
-	"env": {
-		"dev": {
-			"d1_databases": [
-				{
-					"binding": "db",
-					"database_name": "aay-lunch",
-					"database_id": "c7f9debf-9f1f-46b2-a5ce-35f1f5f1e643"
-				}
-			]
-		}
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "lunch-scraper",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-15",
+  "observability": {
+    "enabled": true
+  },
+  "minify": true,
+  "env": {
+    "dev": {
+      "d1_databases": [
+        {
+          "binding": "db",
+          "database_name": "aay-lunch",
+          "database_id": "c7f9debf-9f1f-46b2-a5ce-35f1f5f1e643"
+        }
+      ]
+    }
+  }
 }
