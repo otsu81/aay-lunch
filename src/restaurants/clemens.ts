@@ -11,15 +11,11 @@ const weekdayMapping: Record<string, string> = {
 
 export class Clemens implements Restaurant {
   private menu: any
-  public restaurantName: string
-  public url: string
-  public menuType: string
+  public restaurantName = 'Clemens Kött & Husman'
+  public url = 'https://www.clemenskott.se/restaurang/'
+  public menuType = 'weekly'
 
-  constructor(public id: number) {
-    this.restaurantName = 'Clemens Kött & Husman'
-    this.url = 'https://www.clemenskott.se/restaurang/'
-    this.menuType = 'weekly'
-  }
+  constructor(public id: number) {}
 
   async generateMenu() {
     const res = await fetch(this.url, {
