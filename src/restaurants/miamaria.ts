@@ -10,21 +10,17 @@ const weekdayMapping: Record<string, string> = {
 }
 
 export class MiaMarias implements Restaurant {
-  public restaurantName: string
-  public url: string
-  public menuType: string
+  public restaurantName = 'MiaMarias'
+  public url = 'https://www.miamarias.nu/'
+  public menuType = 'weekly'
 
-  constructor(public id: number) {
-    this.restaurantName = 'MiaMarias'
-    this.url = 'https://www.miamarias.nu/'
-    this.menuType = 'weekly'
-  }
+  constructor(public id: number) {}
 
   async generateMenu(): Promise<Record<string, string> | undefined> {
     const res = await fetch(this.url, {
       cf: {
-        cacheTtl: 86400, // cache 24h
-      },
+        cacheTtl: 86400
+      }
     })
 
     const html = await res.text()
@@ -45,7 +41,7 @@ export class MiaMarias implements Restaurant {
       const table = toggle.querySelector('table')
       if (!table) continue
 
-      const skipWords = ['Kött', 'Fisk', 'Vegetarisk']
+      const skipWords = ['Kött', 'Fisk', 'Vegetarisk'] // skip descriptions to save space
       const dishTexts = Array.from(table.querySelectorAll('td p'))
         .map((p) => {
           const t = (p as HTMLElement).textContent?.trim()
