@@ -6,6 +6,7 @@ import { MiaMarias } from './restaurants/miamaria'
 import { Niagara } from './restaurants/niagara'
 import { Restaurant } from './restaurants/restaurant'
 import { Valfarden } from './restaurants/valfarden'
+import { Saltimporten } from './restaurants/saltimporten'
 
 interface Env {
   db: D1Database
@@ -13,13 +14,12 @@ interface Env {
 
 const hono = new Hono<{ Bindings: Env }>()
 
-// const weekday = new Date()
-//   .toLocaleString('en-US', {
-//     timeZone: 'Europe/Stockholm',
-//     weekday: 'short',
-//   })
-//   .toLowerCase()
-const weekday = 'tue'
+const weekday = new Date()
+  .toLocaleString('en-US', {
+    timeZone: 'Europe/Stockholm',
+    weekday: 'short',
+  })
+  .toLowerCase()
 
 hono.get('/refresh', async (c) => {
   const resDb = new Db(c.env.db)
@@ -29,6 +29,7 @@ hono.get('/refresh', async (c) => {
   restaurants.add(new MiaMarias(i++))
   restaurants.add(new Niagara(i++))
   restaurants.add(new Valfarden(i++))
+  restaurants.add(new Saltimporten(i++))
 
   const promises = Array.from(restaurants).map((r) => resDb.refreshMenu(r))
   const resolved = await Promise.all(promises)

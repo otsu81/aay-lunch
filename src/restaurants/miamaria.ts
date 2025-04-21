@@ -51,10 +51,8 @@ export class MiaMarias implements Restaurant {
         .filter(Boolean)
 
       const dishes = dishTexts.join('<br>')
-      console.log({ weekday, dishes })
       menu[weekday] = dishes
     }
-    console.log({ menu })
     return menu
   }
 }
