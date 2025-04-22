@@ -16,6 +16,22 @@
           "database_id": "c7f9debf-9f1f-46b2-a5ce-35f1f5f1e643"
         }
       ]
+    },
+    "prod": {
+      "preview_urls": false,
+      "routes": [
+        {
+          "custom_domain": true,
+          "pattern": "lunch.otsu.dev"
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "db",
+          "database_name": "aay-lunch-prod",
+          "database_id": "c96d8b40-181f-4e8c-89f7-5975955f1d43"
+        }
+      ]
     }
   }
 }
