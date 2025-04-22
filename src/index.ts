@@ -23,7 +23,6 @@ async function getWeekday(): Promise<string> {
     locale: enUS
   }).toLowerCase()
 
-  console.log({ weekday })
   return weekday
 }
 
