@@ -1,3 +1,5 @@
+import { format, toZonedTime } from 'date-fns-tz'
+import { enUS } from 'date-fns/locale'
 import { Hono } from 'hono'
 import { Db } from './db'
 import { Generator } from './generator'
@@ -5,8 +7,8 @@ import { Clemens } from './restaurants/clemens'
 import { MiaMarias } from './restaurants/miamaria'
 import { Niagara } from './restaurants/niagara'
 import { Restaurant } from './restaurants/restaurant'
-import { Valfarden } from './restaurants/valfarden'
 import { Saltimporten } from './restaurants/saltimporten'
+import { Valfarden } from './restaurants/valfarden'
 
 interface Env {
   db: D1Database
@@ -14,12 +16,15 @@ interface Env {
 
 const hono = new Hono<{ Bindings: Env }>()
 
-const weekday = new Date()
-  .toLocaleString('en-US', {
-    timeZone: 'Europe/Stockholm',
-    weekday: 'short',
-  })
-  .toLowerCase()
+async function getWeekday(): Promise<string> {
+  const now = new Date()
+  const sweDate = toZonedTime(now, 'Europe/Stockholm')
+  const weekday = format(sweDate, 'EEE', {
+    locale: enUS
+  }).toLowerCase()
+
+  return weekday
+}
 
 hono.get('/refresh', async (c) => {
   const resDb = new Db(c.env.db)
@@ -38,6 +43,8 @@ hono.get('/refresh', async (c) => {
 })
 
 hono.get('/', async (c) => {
+  const weekday = await getWeekday()
+
   if (weekday === 'sat' || weekday === 'sun') {
     return c.text("go home and be a family man, there's no lunch menu on weekends")
   }
