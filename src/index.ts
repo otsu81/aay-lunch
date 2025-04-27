@@ -9,14 +9,18 @@ import { Niagara } from './restaurants/niagara'
 import { Restaurant } from './restaurants/restaurant'
 import { Saltimporten } from './restaurants/saltimporten'
 import { Valfarden } from './restaurants/valfarden'
+import { Context } from 'hono'
 
 interface Env {
   db: D1Database
 }
 
+const weekdays = new Set(['mon', 'tue', 'wed', 'thu', 'fri'])
+
 const hono = new Hono<{ Bindings: Env }>()
 
-async function getWeekday(): Promise<string> {
+async function getWeekday(day?: string): Promise<string> {
+  if (day && weekdays.has(day)) return day
   const now = new Date()
   const sweDate = toZonedTime(now, 'Europe/Stockholm')
   const weekday = format(sweDate, 'EEE', {
@@ -24,6 +28,14 @@ async function getWeekday(): Promise<string> {
   }).toLowerCase()
 
   return weekday
+}
+
+async function getWeekdayMenu(weekday: string, c:  Context<{Bindings: Env}>) {
+  const resDb = new Db(c.env.db)
+  const gen = new Generator(resDb)
+  const todaysMenu = await gen.generateWeekdayMenu(weekday)
+
+  return c.html(todaysMenu)
 }
 
 hono.get('/refresh', async (c) => {
@@ -42,17 +54,20 @@ hono.get('/refresh', async (c) => {
   return c.json(resolved)
 })
 
+hono.get('/:weekday', async (c) => {
+  const weekday = c.req.param('weekday')
+  if (weekdays.has(weekday)) return getWeekdayMenu(weekday, c)
+
+  return c.status(403)
+})
+
 hono.get('/', async (c) => {
   const weekday = await getWeekday()
 
   if (weekday === 'sat' || weekday === 'sun') {
     return c.text("go home and be a family man, there's no lunch menu on weekends")
   }
-  const resDb = new Db(c.env.db)
-  const gen = new Generator(resDb)
-  const todaysMenu = await gen.generateWeekdayMenu(weekday)
-
-  return c.html(todaysMenu)
+  return getWeekdayMenu(weekday, c)
 })
 
 export default hono

@@ -2,9 +2,26 @@ import { Db } from './db'
 
 export class Generator {
   constructor(private db: Db) {}
-
+  
   async generateWeekdayMenu(weekday: string) {
     const results = await this.db.getWeekdayMenuAllRestaurants(weekday)
+
+    const days = [
+      { label: 'Mon', path: '/mon' },
+      { label: 'Tue', path: '/tue' },
+      { label: 'Wed', path: '/wed' },
+      { label: 'Thu', path: '/thu' },
+      { label: 'Fri', path: '/fri' },
+    ]
+    
+    const weekdayLinks = days
+      .map(({ label, path }) => {
+        if (label.toLowerCase() === weekday.toLowerCase()) {
+          return `<span class="active-day">${label}</span>`
+        }
+        return `<a href="${path}">${label}</a>`
+      })
+      .join(' | ')
 
     const html = `
     <html>
@@ -76,6 +93,23 @@ export class Generator {
           .menu-table td:first-child a:hover {
             text-decoration: underline;
           }
+
+          .active-day {
+            font-weight: 700;
+            color: #222;
+            text-decoration: underline;
+            cursor: default;
+            user-select: none;
+            margin: 0 0.5rem;
+          }
+          .menu-table td a {
+            margin: 0 0.5rem;
+            text-decoration: none;
+            color: #4facfe;
+          }
+          .menu-table td a:hover {
+            text-decoration: underline;
+          }
         </style>
       </head>
       <body>
@@ -85,6 +119,11 @@ export class Generator {
         </header>
         <table class="menu-table">
           <tbody>
+            <tr>
+              <td colspan="2" style="text-align: center; font-weight: 600; padding: 1rem 0;">
+                ${weekdayLinks}
+              </td>
+            </tr>
             ${results
               .map(
                 (r) =>
