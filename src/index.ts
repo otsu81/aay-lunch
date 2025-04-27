@@ -10,6 +10,7 @@ import { Restaurant } from './restaurants/restaurant'
 import { Saltimporten } from './restaurants/saltimporten'
 import { Valfarden } from './restaurants/valfarden'
 import { Context } from 'hono'
+import { ThapThim } from './restaurants/thapthim'
 
 interface Env {
   db: D1Database
@@ -47,6 +48,7 @@ hono.get('/refresh', async (c) => {
   restaurants.add(new Niagara(i++))
   restaurants.add(new Valfarden(i++))
   restaurants.add(new Saltimporten(i++))
+  restaurants.add(new ThapThim(i++))
 
   const promises = Array.from(restaurants).map((r) => resDb.refreshMenu(r))
   const resolved = await Promise.all(promises)
