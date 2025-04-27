@@ -32,25 +32,30 @@ export class Valfarden implements Restaurant {
 
     ps.forEach((p) => {
       const txt = p.textContent?.trim() || ''
-
-      // if it's a day header, flush previous day and start new
-      const bold = p.querySelector('b')
-      if (bold && /^(Måndag|Tisdag|Onsdag|Torsdag|Fredag)/i.test(bold.textContent!)) {
-        // flush old
+      const dayHeaderMatch = txt.match(/^(Måndag|Tisdag|Onsdag|Torsdag|Fredag)/i)
+      if (dayHeaderMatch) {
         if (currentDayKey) {
           menu[currentDayKey] = currentDishes.length
             ? currentDishes.join('<br>')
             : 'Stängt'
         }
-        const daySw = bold.textContent!.split(' ')[0].toLowerCase()
+        const daySw = dayHeaderMatch[1].toLowerCase()
         currentDayKey = weekdayMapping[daySw]
         currentDishes = []
         return
       }
-      if (txt === '–' || txt === '') return // skip separators
+
+      if (txt === '—' || txt === '') return // skip separators, välfärden uses a wonky –
 
       currentDishes.push(txt)
     })
+
+    // flush last day after loop
+    if (currentDayKey) {
+      menu[currentDayKey] = currentDishes.length
+        ? currentDishes.join('<br>')
+        : 'Stängt'
+    }
     return menu
   }
 }

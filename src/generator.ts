@@ -97,8 +97,6 @@ export class Generator {
           .active-day {
             font-weight: 700;
             color: #222;
-            text-decoration: underline;
-            cursor: default;
             user-select: none;
             margin: 0 0.5rem;
           }
@@ -128,7 +126,7 @@ export class Generator {
               .map(
                 (r) =>
                   `<tr>
-                    <td><a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.name}</a>:</td>
+                    <td><a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.name}</a></td>
                     <td>${r.dish}</td>
                   </tr>`
               )
