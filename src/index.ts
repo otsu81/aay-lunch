@@ -1,6 +1,6 @@
 import { format, toZonedTime } from 'date-fns-tz'
 import { enUS } from 'date-fns/locale'
-import { Hono } from 'hono'
+import { Context, Hono } from 'hono'
 import { Db } from './db'
 import { Generator } from './generator'
 import { Clemens } from './restaurants/clemens'
@@ -8,13 +8,8 @@ import { MiaMarias } from './restaurants/miamaria'
 import { Niagara } from './restaurants/niagara'
 import { Restaurant } from './restaurants/restaurant'
 import { Saltimporten } from './restaurants/saltimporten'
-import { Valfarden } from './restaurants/valfarden'
-import { Context } from 'hono'
 import { ThapThim } from './restaurants/thapthim'
-
-interface Env {
-  db: D1Database
-}
+import { Valfarden } from './restaurants/valfarden'
 
 const weekdays = new Set(['mon', 'tue', 'wed', 'thu', 'fri'])
 

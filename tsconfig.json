@@ -1,11 +1,12 @@
 {
 	"compilerOptions": {
 		"target": "es2021",
-		"lib": ["es2021"],
+		"lib": [
+			"es2021"
+		],
 		"module": "es2022",
 		"moduleResolution": "Bundler",
 		"types": [
-			"@cloudflare/workers-types/2023-07-01",
 			"jest"
 		],
 		"resolveJsonModule": true,
@@ -17,6 +18,11 @@
 		"strict": true,
 		"skipLibCheck": true
 	},
-	"exclude": ["test"],
-	"include": ["worker-configuration.d.ts", "src/**/*.ts"]
+	"exclude": [
+		"test"
+	],
+	"include": [
+		"worker-configuration.d.ts",
+		"src/**/*.ts"
+	]
 }
