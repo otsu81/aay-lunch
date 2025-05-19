@@ -74,7 +74,6 @@ export class ThapThim implements Restaurant {
       menu[weekdayMapping[wd]] = lines.filter(Boolean).join('<br>')
     }
 
-    console.log({menu})
     return menu
   }
 }
