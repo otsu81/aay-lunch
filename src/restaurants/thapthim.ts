@@ -1,4 +1,4 @@
-import { Restaurant } from './restaurant'
+import type { Restaurant } from './restaurant'
 
 interface TTDish {
   fname: string
@@ -37,8 +37,8 @@ function formatDish(dish: TTDish) {
 
 function formatDishes(dishes: TTDish[]) {
   return dishes
-    .filter(d => d && d.title)
-    .map(d => formatDish(d))
+    .filter((d) => d?.title)
+    .map((d) => formatDish(d))
     .join('<br>')
 }
 
@@ -51,10 +51,10 @@ export class ThapThim implements Restaurant {
   constructor(public id: number) {}
 
   async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.menuUrl, { 
-      cf: { 
-        cacheTtl: 86400 
-      } 
+    const res = await fetch(this.menuUrl, {
+      cf: {
+        cacheTtl: 86400,
+      },
     })
 
     const j = (await res.json()) as TTApiResponse
@@ -62,14 +62,14 @@ export class ThapThim implements Restaurant {
 
     const menu: Record<string, string> = {}
 
-    const veckans = weekexp['Veckans'][0]
-    const veckansStr = 'Veckans: ' + formatDish(veckans)
+    const veckans = weekexp.Veckans[0]
+    const veckansStr = `Veckans: ${formatDish(veckans)}`
 
     const weekdays = Object.keys(weekdayMapping)
     for (const wd of weekdays) {
       const dishes = weekexp[wd as keyof TTWeekExp]
       if (!Array.isArray(dishes) || dishes.length === 0) continue
-    
+
       const lines = [veckansStr, formatDishes(dishes)]
       menu[weekdayMapping[wd]] = lines.filter(Boolean).join('<br>')
     }
