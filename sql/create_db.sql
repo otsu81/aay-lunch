@@ -14,3 +14,9 @@ CREATE TABLE IF NOT EXISTS menus (
   fri TEXT,
   FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
 );
+
+CREATE TABLE IF NOT EXISTS metadata (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,4 +1,4 @@
-import { Restaurant } from './restaurants/restaurant'
+import type { Restaurant } from './restaurants/restaurant'
 
 export class Db {
   constructor(private db: D1Database) {}
@@ -67,5 +67,29 @@ export class Db {
     return results
   }
 
-  // async refreshMenus(restaurants: Map<number, Restaurant>) {}
+  async setLastRefreshTimpeStamp() {
+    await this.db
+      .prepare(
+        `
+        INSERT INTO METADATA (key, value, updated_at)
+        VALUES ('last_refresh', datetime('now'), datetime('now'))
+        ON CONFLICT(key) DO UPDATE SET
+          value = datetime('now'),
+          updated_at = datetime('now')
+      `,
+      )
+      .run()
+  }
+
+  async getLastRefreshTimestamp(): Promise<string | null> {
+    const res = await this.db
+      .prepare(
+        `
+        SELECT value FROM metadata WHERE key = 'last_refresh'
+      `,
+      )
+      .first<{ value: string }>()
+
+    return res?.value || null
+  }
 }
