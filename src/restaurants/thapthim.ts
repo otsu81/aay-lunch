@@ -1,4 +1,4 @@
-import { Restaurant } from './restaurant'
+import type { Restaurant } from './restaurant'
 
 interface TTDish {
   fname: string

@@ -1,5 +1,5 @@
-import { DOMParser, HTMLElement } from 'linkedom'
-import { Restaurant } from './restaurant'
+import { DOMParser, type HTMLElement } from 'linkedom'
+import type { Restaurant } from './restaurant'
 
 const weekdayMapping: Record<string, string> = {
   måndag: 'mon',
