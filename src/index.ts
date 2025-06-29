@@ -1,12 +1,12 @@
 import { format, toZonedTime } from 'date-fns-tz'
 import { enUS } from 'date-fns/locale'
-import { Context, Hono } from 'hono'
+import { type Context, Hono } from 'hono'
 import { Db } from './db'
 import { Generator } from './generator'
 import { Clemens } from './restaurants/clemens'
 import { MiaMarias } from './restaurants/miamaria'
 import { Niagara } from './restaurants/niagara'
-import { Restaurant } from './restaurants/restaurant'
+import type { Restaurant } from './restaurants/restaurant'
 import { Saltimporten } from './restaurants/saltimporten'
 import { ThapThim } from './restaurants/thapthim'
 import { Valfarden } from './restaurants/valfarden'
@@ -20,13 +20,13 @@ async function getWeekday(day?: string): Promise<string> {
   const now = new Date()
   const sweDate = toZonedTime(now, 'Europe/Stockholm')
   const weekday = format(sweDate, 'EEE', {
-    locale: enUS
+    locale: enUS,
   }).toLowerCase()
 
   return weekday
 }
 
-async function getWeekdayMenu(weekday: string, c:  Context<{Bindings: Env}>) {
+async function getWeekdayMenu(weekday: string, c: Context<{ Bindings: Env }>) {
   const resDb = new Db(c.env.db)
   const gen = new Generator(resDb)
   const todaysMenu = await gen.generateWeekdayMenu(weekday)
@@ -47,6 +47,9 @@ hono.get('/refresh', async (c) => {
 
   const promises = Array.from(restaurants).map((r) => resDb.refreshMenu(r))
   const resolved = await Promise.all(promises)
+
+  // set timestamp of last refresh
+  await resDb.setLastRefreshTimpeStamp()
 
   return c.json(resolved)
 })

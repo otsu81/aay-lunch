@@ -1,5 +1,5 @@
-import { DOMParser, HTMLElement } from 'linkedom'
-import { Restaurant } from './restaurant'
+import { DOMParser, type HTMLElement } from 'linkedom'
+import type { Restaurant } from './restaurant'
 
 const weekdayMapping: Record<string, string> = {
   man: 'mon',
@@ -10,7 +10,7 @@ const weekdayMapping: Record<string, string> = {
 }
 
 export class Clemens implements Restaurant {
-  private menu: any
+  private menu: Record<string, string> = {}
   public restaurantName = 'Clemens Kött & Husman'
   public url = 'https://www.clemenskott.se/restaurang/'
   public menuType = 'weekly'
