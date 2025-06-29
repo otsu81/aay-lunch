@@ -1,10 +1,11 @@
-import { Db } from './db'
+import type { Db } from './db'
 
 export class Generator {
   constructor(private db: Db) {}
-  
+
   async generateWeekdayMenu(weekday: string) {
     const results = await this.db.getWeekdayMenuAllRestaurants(weekday)
+    const lastRefresh = await this.db.getLastRefreshTimestamp()
 
     const days = [
       { label: 'Mon', path: '/mon' },
@@ -13,7 +14,7 @@ export class Generator {
       { label: 'Thu', path: '/thu' },
       { label: 'Fri', path: '/fri' },
     ]
-    
+
     const weekdayLinks = days
       .map(({ label, path }) => {
         if (label.toLowerCase() === weekday.toLowerCase()) {
@@ -108,6 +109,13 @@ export class Generator {
           .menu-table td a:hover {
             text-decoration: underline;
           }
+
+          .refresh-info {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+          }
         </style>
       </head>
       <body>
@@ -115,6 +123,7 @@ export class Generator {
           <h1>Aay Lunch</h1>
           <h5>~ What's for lunch today around Nordenskiöldsgatan, Malmö ~</h5>
         </header>
+
         <table class="menu-table">
           <tbody>
             <tr>
@@ -128,11 +137,14 @@ export class Generator {
                   `<tr>
                     <td><a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.name}</a></td>
                     <td>${r.dish}</td>
-                  </tr>`
+                  </tr>`,
               )
               .join('\n')}
           </tbody>
         </table>
+
+        <div class="refresh-info">Last refresh: ${lastRefresh}</div>
+
       </body>
     </html>
     `
