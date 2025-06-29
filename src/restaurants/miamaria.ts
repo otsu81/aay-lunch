@@ -1,5 +1,5 @@
-import { DOMParser, HTMLElement } from 'linkedom'
-import { Restaurant } from './restaurant'
+import { DOMParser, type HTMLElement } from 'linkedom'
+import type { Restaurant } from './restaurant'
 
 const weekdayMapping: Record<string, string> = {
   '1': 'mon',
@@ -48,7 +48,7 @@ export class MiaMarias implements Restaurant {
       for (const dish of dishContainers) {
         const dishDescription = dish.querySelector('.elementor-widget-text-editor.elementor-widget__width-initial p')
         const text = dishDescription?.textContent?.trim()
-        todaysDishText = todaysDishText.concat(text + '<br>')
+        todaysDishText = todaysDishText.concat(`${text}<br>`)
       }
       menu[weekday] = todaysDishText
     }
