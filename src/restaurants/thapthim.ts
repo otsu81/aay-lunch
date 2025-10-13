@@ -1,4 +1,4 @@
-import type { Restaurant } from './restaurant'
+import type { Restaurant } from "./restaurant"
 
 interface TTDish {
   fname: string
@@ -23,15 +23,15 @@ interface TTApiResponse {
 }
 
 const weekdayMapping: Record<string, string> = {
-  Måndag: 'mon',
-  Tisdag: 'tue',
-  Onsdag: 'wed',
-  Torsdag: 'thu',
-  Fredag: 'fri',
+  Måndag: "mon",
+  Tisdag: "tue",
+  Onsdag: "wed",
+  Torsdag: "thu",
+  Fredag: "fri",
 }
 
 function formatDish(dish: TTDish) {
-  if (!dish || !dish.title) return ''
+  if (!dish || !dish.title) return ""
   return `${dish.title} - ${dish.desc}`
 }
 
@@ -39,14 +39,14 @@ function formatDishes(dishes: TTDish[]) {
   return dishes
     .filter((d) => d?.title)
     .map((d) => formatDish(d))
-    .join('<br>')
+    .join("<br>")
 }
 
 export class ThapThim implements Restaurant {
-  public restaurantName = 'Thap Thim Västergatan'
-  public url = 'https://www.thapthim.se/'
-  public menuUrl = 'https://api.thapthim.se/?read=lunchinfo&store=vg'
-  public menuType = 'weekly'
+  public restaurantName = "Thap Thim Västergatan"
+  public url = "https://www.thapthim.se/"
+  public menuUrl = "https://api.thapthim.se/?read=lunchinfo&store=vg"
+  public menuType = "weekly"
 
   constructor(public id: number) {}
 
@@ -71,7 +71,7 @@ export class ThapThim implements Restaurant {
       if (!Array.isArray(dishes) || dishes.length === 0) continue
 
       const lines = [veckansStr, formatDishes(dishes)]
-      menu[weekdayMapping[wd]] = lines.filter(Boolean).join('<br>')
+      menu[weekdayMapping[wd]] = lines.filter(Boolean).join("<br>")
     }
 
     return menu

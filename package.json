@@ -1,31 +1,32 @@
 {
-	"name": "aay-scraper",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev",
-		"test": "jest --coverage --testPathIgnorePatterns=out",
-		"cf-typegen": "wrangler types",
-		"lint": "gts lint",
-		"lint:fix": "gts fix"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.0.6",
-		"@cloudflare/vitest-pool-workers": "^0.8.47",
-		"@swc/jest": "^0.2.38",
-		"@types/jest": "^29.5.14",
-		"jest": "^29.7.0",
-		"ts-jest": "^29.4.0",
-		"typescript": "^5.8.3",
-		"vitest": "~3.0.9",
-		"wrangler": "^4.22.0"
-	},
-	"dependencies": {
-		"date-fns": "^4.1.0",
-		"date-fns-tz": "^3.2.0",
-		"hono": "^4.8.3",
-		"linkedom": "^0.18.11"
-	}
+  "name": "aay-scraper",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "jest --coverage --testPathIgnorePatterns=out",
+    "test:file": "jest --coverage --testPathIgnorePatterns=out --testPathPattern",
+    "cf-typegen": "wrangler types",
+    "lint": "biome check",
+    "lint:fix": "biome check --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.6",
+    "@cloudflare/vitest-pool-workers": "^0.8.71",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3",
+    "vitest": "~3.0.9",
+    "wrangler": "^4.42.2"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "hono": "^4.9.12",
+    "linkedom": "^0.18.12"
+  }
 }

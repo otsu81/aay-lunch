@@ -1,10 +1,10 @@
 module.exports = {
-  testEnvironment: 'node',
-  testMatch: ['**/*.test.ts'],
+  testEnvironment: "node",
+  testMatch: ["**/*.test.ts"],
   transform: {
-    '^.+\\.tsx?$': ['@swc/jest'],
+    "^.+\\.tsx?$": ["@swc/jest"],
   },
   collectCoverage: true,
   clearMocks: true,
-  coverageDirectory: 'coverage',
+  coverageDirectory: "coverage",
 }
