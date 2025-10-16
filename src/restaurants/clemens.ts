@@ -1,19 +1,30 @@
-import { DOMParser, type HTMLElement } from 'linkedom'
-import type { Restaurant } from './restaurant'
+import type { Restaurant } from "./restaurant"
 
 const weekdayMapping: Record<string, string> = {
-  man: 'mon',
-  tis: 'tue',
-  ons: 'wed',
-  tor: 'thu',
-  fre: 'fri',
+  man: "mon",
+  tis: "tue",
+  ons: "wed",
+  tor: "thu",
+  fre: "fri",
+}
+
+interface LunchmenyItem {
+  title: {
+    rendered: string
+  }
+  acf: {
+    veckodag: Array<{
+      value: string
+      label: string
+    }>
+  }
 }
 
 export class Clemens implements Restaurant {
   private menu: Record<string, string> = {}
-  public restaurantName = 'Clemens Kött & Husman'
-  public url = 'https://www.clemenskott.se/restaurang/'
-  public menuType = 'weekly'
+  public restaurantName = "Clemens Kött & Husman"
+  public url = "https://olleburl.in/clemens/wp-json/wp/v2/lunchmeny"
+  public menuType = "weekly"
 
   constructor(public id: number) {}
 
@@ -24,31 +35,20 @@ export class Clemens implements Restaurant {
       },
     })
 
-    const html = await res.text()
-    const document = new DOMParser().parseFromString(html, 'text/html')
+    const data: LunchmenyItem[] = await res.json()
 
-    const h2s = document.querySelectorAll('h2')
-    let targetFieldSet: HTMLElement | null = null
+    const menu = data.reduce<Record<string, string>>((acc, item) => {
+      const clemDay = item.acf?.veckodag?.[0]?.value
+      const dish = item.title?.rendered
 
-    for (const h2 of h2s) {
-      if (h2.textContent?.trim() === 'Veckans Lunchmeny') {
-        targetFieldSet = h2.closest('fieldset')
-        break
+      if (clemDay && dish) {
+        const day = weekdayMapping[clemDay]
+        if (day) {
+          acc[day] = dish
+        }
       }
-    }
-    if (!targetFieldSet) return
 
-    const els = targetFieldSet.querySelectorAll('div.my-4.text-sm.text-left')
-    const menu = Array.from(els).reduce<Record<string, string>>((a, el) => {
-      const clemDay = el
-        .querySelector('div.flex.flex-row.items-baseline > span.acme.uppercase.tracking-wide')
-        ?.textContent.trim()
-      const dish = el.querySelector('div.italic')?.textContent?.trim()
-      const day = weekdayMapping[clemDay]
-      if (day && dish) {
-        a[day] = dish
-      }
-      return a
+      return acc
     }, {})
 
     this.menu = menu

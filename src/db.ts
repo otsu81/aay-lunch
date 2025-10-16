@@ -1,4 +1,4 @@
-import type { Restaurant } from './restaurants/restaurant'
+import type { Restaurant } from "./restaurants/restaurant"
 
 export class Db {
   constructor(private db: D1Database) {}
