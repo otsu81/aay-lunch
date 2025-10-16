@@ -11,6 +11,6 @@
     }
   },
   "files": {
-    "includes": ["!coverage", "!node_modules"]
+    "includes": ["**", "!coverage", "!node_modules", "!worker-configuration.d.ts"]
   }
 }
