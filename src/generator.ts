@@ -1,4 +1,4 @@
-import type { Db } from './db'
+import type { Db } from "./db"
 
 export class Generator {
   constructor(private db: Db) {}
@@ -8,11 +8,11 @@ export class Generator {
     const lastRefresh = await this.db.getLastRefreshTimestamp()
 
     const days = [
-      { label: 'Mon', path: '/mon' },
-      { label: 'Tue', path: '/tue' },
-      { label: 'Wed', path: '/wed' },
-      { label: 'Thu', path: '/thu' },
-      { label: 'Fri', path: '/fri' },
+      { label: "Mon", path: "/mon" },
+      { label: "Tue", path: "/tue" },
+      { label: "Wed", path: "/wed" },
+      { label: "Thu", path: "/thu" },
+      { label: "Fri", path: "/fri" },
     ]
 
     const weekdayLinks = days
@@ -22,7 +22,7 @@ export class Generator {
         }
         return `<a href="${path}">${label}</a>`
       })
-      .join(' | ')
+      .join(" | ")
 
     const html = `
     <html>
@@ -139,7 +139,7 @@ export class Generator {
                     <td>${r.dish}</td>
                   </tr>`,
               )
-              .join('\n')}
+              .join("\n")}
           </tbody>
         </table>
 
