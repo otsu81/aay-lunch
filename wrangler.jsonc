@@ -23,7 +23,7 @@
         {
           "custom_domain": true,
           "pattern": "lunch.otsu.dev"
-        },
+        }
       ],
       "d1_databases": [
         {
