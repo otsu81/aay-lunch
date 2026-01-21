@@ -49,9 +49,7 @@ async function refreshMenus(db: D1Database) {
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
 
   const succeeded = results.filter((r) => r.status === "fulfilled").map((r) => r.value)
-  const failed = results
-    .map((r, i) => (r.status === "rejected" ? restaurants[i].restaurantName : null))
-    .filter(Boolean)
+  const failed = results.map((r, i) => (r.status === "rejected" ? restaurants[i].restaurantName : null)).filter(Boolean)
 
   if (failed.length) {
     console.error(`failed to refresh: ${failed.join(", ")}`)
@@ -85,7 +83,7 @@ hono.get("/", async (c) => {
 
 export default {
   fetch: hono.fetch,
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(refreshMenus(env.db))
   },
 }
