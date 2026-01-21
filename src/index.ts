@@ -34,24 +34,37 @@ async function getWeekdayMenu(weekday: string, c: Context<{ Bindings: Env }>) {
   return c.html(todaysMenu)
 }
 
-hono.get("/refresh", async (c) => {
-  const resDb = new Db(c.env.db)
-  const restaurants = new Set<Restaurant>()
+async function refreshMenus(db: D1Database) {
+  const resDb = new Db(db)
   let i = 0
-  restaurants.add(new Clemens(i++))
-  restaurants.add(new MiaMarias(i++))
-  restaurants.add(new Niagara(i++))
-  restaurants.add(new Valfarden(i++))
-  restaurants.add(new Saltimporten(i++))
-  restaurants.add(new ThapThim(i++))
+  const restaurants: Restaurant[] = [
+    new Clemens(i++),
+    new MiaMarias(i++),
+    new Niagara(i++),
+    new Valfarden(i++),
+    new Saltimporten(i++),
+    new ThapThim(i++),
+  ]
 
-  const promises = Array.from(restaurants).map((r) => resDb.refreshMenu(r))
-  const resolved = await Promise.all(promises)
+  const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
 
-  // set timestamp of last refresh
-  await resDb.setLastRefreshTimpeStamp()
+  const succeeded = results.filter((r) => r.status === "fulfilled").map((r) => r.value)
+  const failed = results
+    .map((r, i) => (r.status === "rejected" ? restaurants[i].restaurantName : null))
+    .filter(Boolean)
 
-  return c.json(resolved)
+  if (failed.length) {
+    console.error(`failed to refresh: ${failed.join(", ")}`)
+  }
+
+  await resDb.setLastRefreshTimestamp()
+
+  return { succeeded, failed }
+}
+
+hono.get("/refresh", async (c) => {
+  const result = await refreshMenus(c.env.db)
+  return c.text(JSON.stringify(result, null, 2), 200, { "Content-Type": "application/json" })
 })
 
 hono.get("/:weekday", async (c) => {
@@ -70,4 +83,9 @@ hono.get("/", async (c) => {
   return getWeekdayMenu(weekday, c)
 })
 
-export default hono
+export default {
+  fetch: hono.fetch,
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(refreshMenus(env.db))
+  },
+}

@@ -21,15 +21,15 @@ interface LunchmenyItem {
 }
 
 export class Clemens implements Restaurant {
-  private menu: Record<string, string> = {}
   public restaurantName = "Clemens Kött & Husman"
-  public url = "https://olleburl.in/clemens/wp-json/wp/v2/lunchmeny"
+  public url = "https://www.clemenskott.se/restaurang/"
   public menuType = "weekly"
+  private scraperUrl = "https://olleburl.in/clemens/wp-json/wp/v2/lunchmeny"
 
   constructor(public id: number) {}
 
   async generateMenu() {
-    const res = await fetch(this.url, {
+    const res = await fetch(this.scraperUrl, {
       cf: {
         cacheTtl: 86400,
       },
@@ -51,11 +51,7 @@ export class Clemens implements Restaurant {
       return acc
     }, {})
 
-    this.menu = menu
     return menu
   }
 
-  async getDayMenu(weekday: string) {
-    return this.menu[weekday]
-  }
 }

@@ -53,6 +53,11 @@ export class Db {
   }
 
   async getWeekdayMenuAllRestaurants(weekday: string) {
+    const validDays = new Set(["mon", "tue", "wed", "thu", "fri"])
+    if (!validDays.has(weekday)) {
+      throw new Error(`invalid weekday: ${weekday}`)
+    }
+
     const { results } = await this.db
       .prepare(
         `
@@ -67,7 +72,7 @@ export class Db {
     return results
   }
 
-  async setLastRefreshTimpeStamp() {
+  async setLastRefreshTimestamp() {
     await this.db
       .prepare(
         `
