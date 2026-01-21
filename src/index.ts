@@ -64,7 +64,7 @@ async function refreshMenus(db: D1Database) {
 
 hono.get("/refresh", async (c) => {
   const result = await refreshMenus(c.env.db)
-  return c.json(result)
+  return c.text(JSON.stringify(result, null, 2), 200, { "Content-Type": "application/json" })
 })
 
 hono.get("/:weekday", async (c) => {
