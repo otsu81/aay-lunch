@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
+    "dev": "wrangler d1 execute aay-lunch --file ./sql/create_db.sql -e=dev && wrangler dev -e dev",
     "start": "wrangler dev",
     "test": "jest --coverage --testPathIgnorePatterns=out",
     "test:file": "jest --coverage --testPathIgnorePatterns=out --testPathPattern",
