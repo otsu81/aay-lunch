@@ -1,15 +1,9 @@
 # AAY Lunch
 
-A scraper for lunch places near my office. Refresh the database and fetch the latest with `/refresh`. 
+A scraper for lunch places near my office. Refresh the database and fetch the latest with `/refresh`.
 
 Is a restaurant missing? Make a PR!
 
-## Setup
+## Dev
 
-For local dev:
-
-```
-npx wrangler d1 execute aay-lunch --file ./sql/create_db.sql -e=dev
-```
-
-
+Uses bun. `bun run dev` sets up local D1 and starts wrangler.
