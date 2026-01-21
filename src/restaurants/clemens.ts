@@ -22,9 +22,9 @@ interface LunchmenyItem {
 
 export class Clemens implements Restaurant {
   public restaurantName = "Clemens Kött & Husman"
-  public url = "https://www.clemenskott.se/restaurang/"
   public menuType = "weekly"
   private scraperUrl = "https://olleburl.in/clemens/wp-json/wp/v2/lunchmeny"
+  public url = "https://www.clemenskott.se/restaurang/"
 
   constructor(public id: number) {}
 
@@ -53,5 +53,4 @@ export class Clemens implements Restaurant {
 
     return menu
   }
-
 }
