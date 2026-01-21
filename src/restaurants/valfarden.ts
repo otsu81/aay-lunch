@@ -43,7 +43,7 @@ export class Valfarden implements Restaurant {
         return
       }
 
-      if (txt === "—" || txt === "") return // skip separators, välfärden uses a wonky –
+      if (txt === "–" || txt === "—" || txt === "-" || txt === "") return // skip separators
 
       currentDishes.push(txt)
     })
