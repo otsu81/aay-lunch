@@ -1,3 +1,4 @@
+import { describe, it } from "vitest"
 import { MiaMarias } from "../miamaria"
 
 describe("miamarias", () => {
