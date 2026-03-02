@@ -9,6 +9,7 @@ import { MiaMarias } from "./restaurants/miamaria"
 import { Niagara } from "./restaurants/niagara"
 import type { Restaurant } from "./restaurants/restaurant"
 import { Saltimporten } from "./restaurants/saltimporten"
+import { Spill } from "./restaurants/spill"
 import { ThapThim } from "./restaurants/thapthim"
 import { Valfarden } from "./restaurants/valfarden"
 
@@ -46,6 +47,7 @@ async function refreshMenus(db: D1Database) {
     new Saltimporten(i++),
     new ThapThim(i++),
     new CafeLive(i++),
+    new Spill(i++),
   ]
 
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
