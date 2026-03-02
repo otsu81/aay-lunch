@@ -3,6 +3,7 @@ import { format, toZonedTime } from "date-fns-tz"
 import { type Context, Hono } from "hono"
 import { Db } from "./db"
 import { Generator } from "./generator"
+import { CafeLive } from "./restaurants/cafelive"
 import { Clemens } from "./restaurants/clemens"
 import { MiaMarias } from "./restaurants/miamaria"
 import { Niagara } from "./restaurants/niagara"
@@ -44,6 +45,7 @@ async function refreshMenus(db: D1Database) {
     new Valfarden(i++),
     new Saltimporten(i++),
     new ThapThim(i++),
+    new CafeLive(i++),
   ]
 
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
