@@ -1,5 +1,11 @@
 import type { Restaurant } from "./restaurants/restaurant"
 
+export interface WeekdayMenuRow {
+  name: string
+  url: string
+  dish: string
+}
+
 export class Db {
   constructor(private db: D1Database) {}
 
@@ -52,7 +58,7 @@ export class Db {
     return menu
   }
 
-  async getWeekdayMenuAllRestaurants(weekday: string) {
+  async getWeekdayMenuAllRestaurants(weekday: string): Promise<WeekdayMenuRow[]> {
     const validDays = new Set(["mon", "tue", "wed", "thu", "fri"])
     if (!validDays.has(weekday)) {
       throw new Error(`invalid weekday: ${weekday}`)
@@ -69,7 +75,14 @@ export class Db {
       )
       .all()
 
-    return results
+    return (results || []).map((row) => {
+      const r = row as Record<string, unknown>
+      return {
+        name: String(r.name ?? ""),
+        url: String(r.url ?? ""),
+        dish: String(r.dish ?? ""),
+      }
+    })
   }
 
   async setLastRefreshTimestamp() {
