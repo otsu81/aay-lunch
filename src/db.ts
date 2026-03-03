@@ -64,6 +64,7 @@ export class Db {
       throw new Error(`invalid weekday: ${weekday}`)
     }
 
+    // Column identifiers can't be parameterized in SQLite; weekday is validated above
     const { results } = await this.db
       .prepare(
         `
@@ -73,23 +74,16 @@ export class Db {
         WHERE m.${weekday} IS NOT NULL AND m.${weekday} != ''
       `,
       )
-      .all()
+      .all<WeekdayMenuRow>()
 
-    return (results || []).map((row) => {
-      const r = row as Record<string, unknown>
-      return {
-        name: String(r.name ?? ""),
-        url: String(r.url ?? ""),
-        dish: String(r.dish ?? ""),
-      }
-    })
+    return results
   }
 
   async setLastRefreshTimestamp() {
     await this.db
       .prepare(
         `
-        INSERT INTO METADATA (key, value, updated_at)
+        INSERT INTO metadata (key, value, updated_at)
         VALUES ('last_refresh', datetime('now'), datetime('now'))
         ON CONFLICT(key) DO UPDATE SET
           value = datetime('now'),
