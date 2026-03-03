@@ -28,7 +28,7 @@ function htmlToLines(html?: string) {
   return text
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line && line.toLowerCase() !== "välkommen")
+    .filter((line) => line && !/^välkommen\W*$/i.test(line))
 }
 
 function mergeParentheticalLines(lines: string[]) {
@@ -80,6 +80,9 @@ export class Spill implements Restaurant {
     }
 
     const day = weekdayMapping[new Date(date).getDay()]
-    return { [day]: lines.join("<br>") }
+    const placeholder = `<i>No menu available — last fetch was for ${day}</i>`
+    return Object.fromEntries(
+      Object.values(weekdayMapping).map((d) => [d, d === day ? lines.join("<br>") : placeholder]),
+    )
   }
 }
