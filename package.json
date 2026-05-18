@@ -13,16 +13,16 @@
     "lint:fix": "biome check --write"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
+    "@biomejs/biome": "^2.4.15",
     "@cloudflare/vitest-pool-workers": "^0.8.71",
     "typescript": "^5.9.3",
     "vitest": "~3.0.9",
-    "wrangler": "^4.69.0"
+    "wrangler": "^4.92.0"
   },
   "dependencies": {
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.2.1",
     "date-fns-tz": "^3.2.0",
-    "hono": "^4.12.3",
+    "hono": "^4.12.19",
     "linkedom": "^0.18.12"
   }
 }
