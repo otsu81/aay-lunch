@@ -47,7 +47,7 @@ export class Generator {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Aay Lunch</title>
+  <title>Mec Lunch</title>
   <style>
     :root {
       --bg: #f5f5f7;
@@ -169,8 +169,8 @@ export class Generator {
 </head>
 <body>
   <header>
-    <h1>Aay Lunch</h1>
-    <p>What's for lunch around Nordenskiöldsgatan, Malmö</p>
+    <h1>Mec Lunch</h1>
+    <p>What's for lunch around Media Evolution City, Malmö</p>
     <nav>${weekdayNav}</nav>
   </header>
 

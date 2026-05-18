@@ -1,4 +1,4 @@
-# AAY Lunch
+# Mec Lunch
 
 A scraper for lunch places near my office. Refresh the database and fetch the latest with `/refresh`.
 

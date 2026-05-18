@@ -31,7 +31,7 @@ const weekdayMapping: Record<string, string> = {
 }
 
 function formatDish(dish: TTDish) {
-  if (!dish || !dish.title) return ""
+  if (!dish?.title) return ""
   return `${dish.title} - ${dish.desc}`
 }
 
