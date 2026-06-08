@@ -24,8 +24,8 @@ export class P2 implements Restaurant {
     const doc = new DOMParser().parseFromString(html, "text/html")
 
     const dayContainers = Array.from(doc.querySelectorAll(".lunchmeny_wrapper")).map((wrapper) =>
-      wrapper.closest(".e-con"),
-    ) as HTMLElement[]
+      (wrapper as HTMLElement).closest(".e-con") as HTMLElement,
+    ).filter(Boolean) as HTMLElement[]
     if (!dayContainers.length) {
       console.error(`[${this.restaurantName}] No lunch menu containers found`)
       return undefined
