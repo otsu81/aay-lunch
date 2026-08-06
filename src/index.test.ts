@@ -20,6 +20,9 @@ describe("worker integration", () => {
         wed TEXT,
         thu TEXT,
         fri TEXT,
+        valid_from TEXT NOT NULL,
+        valid_until TEXT NOT NULL,
+        fetched_at TEXT NOT NULL,
         FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
       )`),
       env.db.prepare(`CREATE TABLE IF NOT EXISTS metadata (

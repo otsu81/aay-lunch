@@ -19,6 +19,9 @@ describe("Db", () => {
         wed TEXT,
         thu TEXT,
         fri TEXT,
+        valid_from TEXT NOT NULL,
+        valid_until TEXT NOT NULL,
+        fetched_at TEXT NOT NULL,
         FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
       )`),
     ])
@@ -38,8 +41,10 @@ describe("Db", () => {
       .bind(restaurant.id, restaurant.restaurantName, restaurant.url, restaurant.menuType)
       .run()
     await env.db
-      .prepare("INSERT OR REPLACE INTO menus (restaurant_id, mon) VALUES (?, ?)")
-      .bind(restaurant.id, "Last week's lunch")
+      .prepare(
+        "INSERT OR REPLACE INTO menus (restaurant_id, mon, valid_from, valid_until, fetched_at) VALUES (?, ?, ?, ?, ?)",
+      )
+      .bind(restaurant.id, "Last week's lunch", "2026-07-27", "2026-07-31", "2026-07-27T08:30:00.000Z")
       .run()
 
     await expect(new Db(env.db).refreshMenu(restaurant)).rejects.toThrow("unable to generate menu")
@@ -49,5 +54,25 @@ describe("Db", () => {
       .bind(restaurant.id)
       .first()
     expect(menu).toBeNull()
+  })
+
+  it("only returns menus valid for the requested week", async () => {
+    const db = new Db(env.db)
+    const restaurant: Restaurant = {
+      id: 998,
+      restaurantName: "Freshness fixture",
+      url: "https://example.com",
+      menuType: "weekly",
+      generateMenu: async () => ({ mon: "Current lunch" }),
+    }
+
+    await db.refreshMenu(restaurant, new Date("2026-08-03T08:30:00.000Z"))
+
+    expect(await db.getWeekdayMenuAllRestaurants("mon", new Date("2026-08-03T12:00:00.000Z"))).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: restaurant.restaurantName, dish: "Current lunch" })]),
+    )
+    expect(await db.getWeekdayMenuAllRestaurants("mon", new Date("2026-08-10T12:00:00.000Z"))).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: restaurant.restaurantName })]),
+    )
   })
 })

@@ -1,15 +1,17 @@
+import { getCurrentWeek, getCurrentWeekdayDate } from "./dates"
 import type { Restaurant } from "./restaurants/restaurant"
 
 export interface WeekdayMenuRow {
   name: string
   url: string
   dish: string
+  fetchedAt: string
 }
 
 export class Db {
   constructor(private db: D1Database) {}
 
-  async refreshMenu(restaurant: Restaurant) {
+  async refreshMenu(restaurant: Restaurant, now = new Date()) {
     let menu: Record<string, string> | undefined
     try {
       menu = await restaurant.generateMenu()
@@ -22,6 +24,7 @@ export class Db {
       throw error
     }
 
+    const validity = getCurrentWeek(now)
     await this.db.batch([
       this.db
         .prepare(
@@ -38,14 +41,17 @@ export class Db {
       this.db
         .prepare(
           `
-        INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri, valid_from, valid_until, fetched_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(restaurant_id) DO UPDATE SET
           mon=excluded.mon,
           tue=excluded.tue,
           wed=excluded.wed,
           thu=excluded.thu,
-          fri=excluded.fri;
+          fri=excluded.fri,
+          valid_from=excluded.valid_from,
+          valid_until=excluded.valid_until,
+          fetched_at=excluded.fetched_at;
         `,
         )
         .bind(
@@ -55,6 +61,9 @@ export class Db {
           menu.wed || null,
           menu.thu || null,
           menu.fri || null,
+          validity.from,
+          validity.until,
+          now.toISOString(),
         ),
     ])
 
@@ -62,22 +71,26 @@ export class Db {
     return menu
   }
 
-  async getWeekdayMenuAllRestaurants(weekday: string): Promise<WeekdayMenuRow[]> {
+  async getWeekdayMenuAllRestaurants(weekday: string, now = new Date()): Promise<WeekdayMenuRow[]> {
     const validDays = new Set(["mon", "tue", "wed", "thu", "fri"])
     if (!validDays.has(weekday)) {
       throw new Error(`invalid weekday: ${weekday}`)
     }
 
+    const date = getCurrentWeekdayDate(weekday, now)
+
     // Column identifiers can't be parameterized in SQLite; weekday is validated above
     const { results } = await this.db
       .prepare(
         `
-        SELECT r.name, r.url, m.${weekday} AS dish
+        SELECT r.name, r.url, m.${weekday} AS dish, m.fetched_at AS fetchedAt
         FROM restaurants r
         JOIN menus m ON r.id = m.restaurant_id
         WHERE m.${weekday} IS NOT NULL AND m.${weekday} != ''
-      `,
+          AND m.valid_from <= ? AND m.valid_until >= ?
+        `,
       )
+      .bind(date, date)
       .all<WeekdayMenuRow>()
 
     return results
