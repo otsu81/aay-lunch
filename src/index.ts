@@ -66,8 +66,6 @@ async function refreshMenus(db: D1Database) {
     console.error(`failed to refresh: ${failed.join(", ")}`)
   }
 
-  await resDb.setLastRefreshTimestamp()
-
   return { succeeded, unavailable, failed }
 }
 

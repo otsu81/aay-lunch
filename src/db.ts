@@ -6,6 +6,8 @@ export interface WeekdayMenuRow {
   url: string
   dish: string
   fetchedAt: string
+  validFrom: string
+  validUntil: string
 }
 
 export class Db {
@@ -103,7 +105,8 @@ export class Db {
     const { results } = await this.db
       .prepare(
         `
-        SELECT r.name, r.url, m.${weekday} AS dish, m.fetched_at AS fetchedAt
+        SELECT r.name, r.url, m.${weekday} AS dish, m.fetched_at AS fetchedAt,
+          m.valid_from AS validFrom, m.valid_until AS validUntil
         FROM restaurants r
         JOIN menus m ON r.id = m.restaurant_id
         WHERE m.${weekday} IS NOT NULL AND m.${weekday} != ''
@@ -114,31 +117,5 @@ export class Db {
       .all<WeekdayMenuRow>()
 
     return results
-  }
-
-  async setLastRefreshTimestamp() {
-    await this.db
-      .prepare(
-        `
-        INSERT INTO metadata (key, value, updated_at)
-        VALUES ('last_refresh', datetime('now'), datetime('now'))
-        ON CONFLICT(key) DO UPDATE SET
-          value = datetime('now'),
-          updated_at = datetime('now')
-      `,
-      )
-      .run()
-  }
-
-  async getLastRefreshTimestamp(): Promise<string | null> {
-    const res = await this.db
-      .prepare(
-        `
-        SELECT value FROM metadata WHERE key = 'last_refresh'
-      `,
-      )
-      .first<{ value: string }>()
-
-    return res?.value || null
   }
 }
