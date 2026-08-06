@@ -10,30 +10,34 @@ export class Db {
   constructor(private db: D1Database) {}
 
   async refreshMenu(restaurant: Restaurant) {
-    const menu = await restaurant.generateMenu()
-    if (!menu) {
-      throw new Error(`unable to generate menu for ${restaurant.restaurantName}`)
+    let menu: Record<string, string> | undefined
+    try {
+      menu = await restaurant.generateMenu()
+      if (!menu) {
+        throw new Error(`unable to generate menu for ${restaurant.restaurantName}`)
+      }
+    } catch (error) {
+      // A missing menu is safer than retaining data from an earlier scrape.
+      await this.db.prepare("DELETE FROM menus WHERE restaurant_id = ?").bind(restaurant.id).run()
+      throw error
     }
 
-    // update restaurant
-    await this.db
-      .prepare(
-        `
+    await this.db.batch([
+      this.db
+        .prepare(
+          `
         INSERT INTO restaurants(id, name, url, menu_type)
         VALUES (?, ?, ?, ?)
         ON CONFLICT (id) DO UPDATE SET
           name=excluded.name,
           url=excluded.url,
           menu_type=excluded.menu_type;
-      `,
-      )
-      .bind(restaurant.id, restaurant.restaurantName, restaurant.url, restaurant.menuType)
-      .run()
-
-    // update restaurant menu
-    await this.db
-      .prepare(
-        `
+        `,
+        )
+        .bind(restaurant.id, restaurant.restaurantName, restaurant.url, restaurant.menuType),
+      this.db
+        .prepare(
+          `
         INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri)
         VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(restaurant_id) DO UPDATE SET
@@ -42,17 +46,17 @@ export class Db {
           wed=excluded.wed,
           thu=excluded.thu,
           fri=excluded.fri;
-      `,
-      )
-      .bind(
-        restaurant.id, // allow for weekday menus that aren't complete
-        menu.mon || null,
-        menu.tue || null,
-        menu.wed || null,
-        menu.thu || null,
-        menu.fri || null,
-      )
-      .run()
+        `,
+        )
+        .bind(
+          restaurant.id, // allow for weekday menus that aren't complete
+          menu.mon || null,
+          menu.tue || null,
+          menu.wed || null,
+          menu.thu || null,
+          menu.fri || null,
+        ),
+    ])
 
     console.log(`restaurant "${restaurant.restaurantName}" menu refreshed`)
     return menu

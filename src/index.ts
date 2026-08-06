@@ -4,8 +4,8 @@ import { type Context, Hono } from "hono"
 import { Db } from "./db"
 import { Generator } from "./generator"
 import { CafeLive } from "./restaurants/cafelive"
-import { Kolgas } from "./restaurants/kolgas"
 import { Clemens } from "./restaurants/clemens"
+import { Kolgas } from "./restaurants/kolgas"
 import { MiaMarias } from "./restaurants/miamaria"
 import { Niagara } from "./restaurants/niagara"
 import { P2 } from "./restaurants/p2"
@@ -40,18 +40,17 @@ async function getWeekdayMenu(weekday: string, c: Context<{ Bindings: Env }>) {
 
 async function refreshMenus(db: D1Database) {
   const resDb = new Db(db)
-  let i = 0
   const restaurants: Restaurant[] = [
-    new Varv(i++),
-    new Spill(i++),
-    new MiaMarias(i++),
-    new P2(i++),
-    new Clemens(i++),
-    new Niagara(i++),
-    new Valfarden(i++),
-    new CafeLive(i++),
-    new Saltimporten(i++),
-    new Kolgas(i++),
+    new Varv(0),
+    new Spill(1),
+    new MiaMarias(2),
+    new P2(3),
+    new Clemens(4),
+    new Niagara(5),
+    new Valfarden(6),
+    new CafeLive(7),
+    new Saltimporten(8),
+    new Kolgas(9),
   ]
 
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
