@@ -1,5 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
 
 const weekdayMapping: Record<string, string> = {
   monday: "mon",
@@ -20,9 +21,8 @@ export class Varv implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.url, {
-      cf: { cacheTtl: 86400 },
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.url, {
       headers: {
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9,sv;q=0.8",
@@ -32,13 +32,17 @@ export class Varv implements Restaurant {
     })
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
+    const pageText = cleanText(doc.documentElement?.textContent)
+    if (pageIndicatesClosure(pageText)) return closed()
 
     const menuContent = (Array.from(doc.querySelectorAll(".sqs-html-content")) as HTMLElement[]).find((content) =>
-      /Lunch for\b/i.test(cleanText(content.textContent)),
+      Array.from(content.querySelectorAll("h2")).some(
+        (heading) => weekdayMapping[cleanText(heading.textContent).toLowerCase()],
+      ),
     )
     if (!menuContent) {
       console.error(`[${this.restaurantName}] Lunch menu content not found`)
-      return undefined
+      return unavailable("lunch menu content not found")
     }
 
     const menu: Record<string, string> = {}
@@ -69,9 +73,9 @@ export class Varv implements Restaurant {
 
     if (Object.keys(menu).length === 0) {
       console.error(`[${this.restaurantName}] No weekday menu parsed`)
-      return undefined
+      return unavailable("no weekday menu parsed")
     }
 
-    return menu
+    return menuForCurrentWeek(menu, pageText, now)
   }
 }

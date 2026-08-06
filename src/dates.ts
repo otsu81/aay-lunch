@@ -1,4 +1,4 @@
-import { addDays, format, startOfWeek } from "date-fns"
+import { addDays, format, getISOWeek, startOfWeek } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 
 const weekdayOffsets: Record<string, number> = {
@@ -17,6 +17,10 @@ export function getCurrentWeek(now = new Date()) {
     from: format(monday, "yyyy-MM-dd"),
     until: format(addDays(monday, 4), "yyyy-MM-dd"),
   }
+}
+
+export function getCurrentISOWeek(now = new Date()) {
+  return getISOWeek(toZonedTime(now, "Europe/Stockholm"))
 }
 
 export function getCurrentWeekdayDate(weekday: string, now = new Date()) {

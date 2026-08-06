@@ -1,5 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
 
 const weekdayMapping: Record<string, string> = {
   måndag: "mon",
@@ -16,13 +17,15 @@ export class Valfarden implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.url, { cf: { cacheTtl: 86400 } })
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.url)
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
+    const pageText = doc.documentElement?.textContent || ""
+    if (pageIndicatesClosure(pageText)) return closed()
 
     const section = doc.querySelector("article section:nth-of-type(2)")
-    if (!section) return
+    if (!section) return unavailable("lunch section not found")
 
     const menu: Record<string, string> = {}
     let currentDayKey: string | null = null
@@ -52,6 +55,6 @@ export class Valfarden implements Restaurant {
     if (currentDayKey) {
       menu[currentDayKey] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
     }
-    return menu
+    return menuForCurrentWeek(menu, pageText, now)
   }
 }

@@ -1,4 +1,5 @@
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { fetchRestaurant, menuForCurrentWeek } from "./scraper"
 
 interface TTDish {
   fname: string
@@ -50,15 +51,11 @@ export class ThapThim implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.menuUrl, {
-      cf: {
-        cacheTtl: 86400,
-      },
-    })
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.menuUrl)
 
     const j = (await res.json()) as TTApiResponse
-    const { weekexp } = j
+    const { weekexp, weekMap } = j
 
     const menu: Record<string, string> = {}
 
@@ -74,6 +71,6 @@ export class ThapThim implements Restaurant {
       menu[weekdayMapping[wd]] = lines.filter(Boolean).join("<br>")
     }
 
-    return menu
+    return menuForCurrentWeek(menu, `vecka ${weekMap}`, now)
   }
 }

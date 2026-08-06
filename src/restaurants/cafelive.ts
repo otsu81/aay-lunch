@@ -1,5 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
 
 const weekdayMapping: Record<string, string> = {
   MÅNDAG: "mon",
@@ -16,20 +17,18 @@ export class CafeLive implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.url, {
-      cf: {
-        cacheTtl: 86400,
-      },
-    })
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.url)
 
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
+    const pageText = doc.documentElement?.textContent || ""
+    if (pageIndicatesClosure(pageText)) return closed()
     const headings = Array.from(doc.querySelectorAll("h1, h2, h3, h4, h5, h6")) as HTMLElement[]
     const heading = headings.find((h) => /lunchmeny/i.test(h.textContent || ""))
     if (!heading) {
       console.error(`[${this.restaurantName}] lunch heading not found`)
-      return undefined
+      return unavailable("lunch heading not found")
     }
 
     const menu: Record<string, string> = {}
@@ -60,9 +59,9 @@ export class CafeLive implements Restaurant {
 
     if (Object.keys(menu).length === 0) {
       console.error(`[${this.restaurantName}] No weekday menu parsed`)
-      return undefined
+      return unavailable("no weekday menu parsed")
     }
 
-    return menu
+    return menuForCurrentWeek(menu, pageText, now)
   }
 }

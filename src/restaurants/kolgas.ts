@@ -1,5 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure } from "./scraper"
 
 const weekdayMapping: Record<string, string> = {
   måndag: "mon",
@@ -16,10 +17,12 @@ export class Kolgas implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.url, { cf: { cacheTtl: 86400 } })
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.url)
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
+    const pageText = doc.documentElement?.textContent || ""
+    if (pageIndicatesClosure(pageText)) return closed()
 
     const menu: Record<string, string> = {}
 
@@ -35,13 +38,13 @@ export class Kolgas implements Restaurant {
       const tbody = header.nextElementSibling as HTMLElement
       if (!tbody) return
 
-      const items = Array.from(tbody.querySelectorAll("td.td_title")).map((td) =>
-        (td as HTMLElement).textContent?.trim() ?? "",
-      ).filter(Boolean)
+      const items = Array.from(tbody.querySelectorAll("td.td_title"))
+        .map((td) => (td as HTMLElement).textContent?.trim() ?? "")
+        .filter(Boolean)
 
       if (items.length) menu[key] = items.join("<br>")
     })
 
-    return menu
+    return menuForCurrentWeek(menu, pageText, now)
   }
 }

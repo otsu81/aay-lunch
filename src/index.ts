@@ -55,7 +55,11 @@ async function refreshMenus(db: D1Database) {
 
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
 
-  const succeeded = results.filter((r) => r.status === "fulfilled").map((r) => r.value)
+  const completed = results.flatMap((result, index) =>
+    result.status === "fulfilled" ? [{ restaurant: restaurants[index].restaurantName, ...result.value }] : [],
+  )
+  const succeeded = completed.filter((result) => result.status === "available").map((result) => result.restaurant)
+  const unavailable = completed.filter((result) => result.status !== "available")
   const failed = results.map((r, i) => (r.status === "rejected" ? restaurants[i].restaurantName : null)).filter(Boolean)
 
   if (failed.length) {
@@ -64,7 +68,7 @@ async function refreshMenus(db: D1Database) {
 
   await resDb.setLastRefreshTimestamp()
 
-  return { succeeded, failed }
+  return { succeeded, unavailable, failed }
 }
 
 hono.get("/refresh", async (c) => {

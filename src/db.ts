@@ -1,5 +1,5 @@
-import { getCurrentWeek, getCurrentWeekdayDate } from "./dates"
-import type { Restaurant } from "./restaurants/restaurant"
+import { getCurrentWeekdayDate } from "./dates"
+import type { Menu, MenuResult, Restaurant } from "./restaurants/restaurant"
 
 export interface WeekdayMenuRow {
   name: string
@@ -12,19 +12,25 @@ export class Db {
   constructor(private db: D1Database) {}
 
   async refreshMenu(restaurant: Restaurant, now = new Date()) {
-    let menu: Record<string, string> | undefined
+    let result: MenuResult
     try {
-      menu = await restaurant.generateMenu()
-      if (!menu) {
-        throw new Error(`unable to generate menu for ${restaurant.restaurantName}`)
+      result = await restaurant.generateMenu(now)
+      if (result.status !== "available") {
+        await this.deleteMenu(restaurant.id)
+        return result
       }
     } catch (error) {
       // A missing menu is safer than retaining data from an earlier scrape.
-      await this.db.prepare("DELETE FROM menus WHERE restaurant_id = ?").bind(restaurant.id).run()
+      await this.deleteMenu(restaurant.id)
       throw error
     }
 
-    const validity = getCurrentWeek(now)
+    const { menu } = result
+    if (!result.periodConfirmed && (await this.isUnchangedFromPreviousWeek(restaurant.id, menu, result.validFrom))) {
+      await this.deleteMenu(restaurant.id)
+      return { status: "unavailable", reason: "unconfirmed menu is unchanged from the previous week" }
+    }
+
     await this.db.batch([
       this.db
         .prepare(
@@ -61,14 +67,28 @@ export class Db {
           menu.wed || null,
           menu.thu || null,
           menu.fri || null,
-          validity.from,
-          validity.until,
+          result.validFrom,
+          result.validUntil,
           now.toISOString(),
         ),
     ])
 
     console.log(`restaurant "${restaurant.restaurantName}" menu refreshed`)
-    return menu
+    return result
+  }
+
+  private async deleteMenu(restaurantId: number) {
+    await this.db.prepare("DELETE FROM menus WHERE restaurant_id = ?").bind(restaurantId).run()
+  }
+
+  private async isUnchangedFromPreviousWeek(restaurantId: number, menu: Menu, validFrom: string) {
+    const previous = await this.db
+      .prepare("SELECT mon, tue, wed, thu, fri, valid_until FROM menus WHERE restaurant_id = ?")
+      .bind(restaurantId)
+      .first<Menu & { valid_until: string }>()
+    if (!previous || previous.valid_until >= validFrom) return false
+
+    return ["mon", "tue", "wed", "thu", "fri"].every((day) => (previous[day] || "") === (menu[day] || ""))
   }
 
   async getWeekdayMenuAllRestaurants(weekday: string, now = new Date()): Promise<WeekdayMenuRow[]> {

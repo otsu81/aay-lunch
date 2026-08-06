@@ -1,4 +1,5 @@
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { fetchRestaurant, menuForDate, unavailable } from "./scraper"
 
 interface SpillAcf {
   datum?: string
@@ -50,21 +51,19 @@ export class Spill implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.pageUrl, {
-      cf: { cacheTtl: 86400 },
-    })
+  async generateMenu(_now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.pageUrl)
     const page = (await res.json()) as SpillPage
     const { acf } = page
     const { datum, dagens_primar, dagens_veg } = acf
     if (!datum) {
       console.error(`[${this.restaurantName}] missing acf/datum`)
-      return undefined
+      return unavailable("source date is missing")
     }
     const date = datum.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")
     if (!date) {
       console.error(`[${this.restaurantName}] missing acf/weekday`)
-      return undefined
+      return unavailable("source date is invalid")
     }
 
     const primary = mergeParentheticalLines(htmlToLines(dagens_primar))
@@ -76,13 +75,11 @@ export class Spill implements Restaurant {
 
     if (!lines.length) {
       console.error(`[${this.restaurantName}] empty dish lines`)
-      return undefined
+      return unavailable("dish lines are empty")
     }
 
     const day = weekdayMapping[new Date(date).getDay()]
-    const placeholder = `<i>No menu available — last fetch was for ${day}</i>`
-    return Object.fromEntries(
-      Object.values(weekdayMapping).map((d) => [d, d === day ? lines.join("<br>") : placeholder]),
-    )
+    if (!day) return unavailable("source date is not a weekday")
+    return menuForDate({ [day]: lines.join("<br>") }, date)
   }
 }

@@ -1,4 +1,6 @@
-import type { Restaurant } from "./restaurant"
+import { getCurrentWeek } from "../dates"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { fetchRestaurant, menuForCurrentWeek } from "./scraper"
 
 const weekdayMapping: Record<string, string> = {
   man: "mon",
@@ -9,6 +11,7 @@ const weekdayMapping: Record<string, string> = {
 }
 
 interface LunchmenyItem {
+  modified: string
   title: {
     rendered: string
   }
@@ -28,29 +31,32 @@ export class Clemens implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu() {
-    const res = await fetch(this.scraperUrl, {
-      cf: {
-        cacheTtl: 86400,
-      },
-    })
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.scraperUrl)
 
     const data: LunchmenyItem[] = await res.json()
+    const validity = getCurrentWeek(now)
 
-    const menu = data.reduce<Record<string, string>>((acc, item) => {
-      const clemDay = item.acf?.veckodag?.[0]?.value
-      const dish = item.title?.rendered
+    const menu = data
+      .filter((item) => {
+        const modified = item.modified?.slice(0, 10)
+        return modified >= validity.from && modified <= validity.until
+      })
+      .reduce<Record<string, string>>((acc, item) => {
+        const clemDay = item.acf?.veckodag?.[0]?.value
+        const dish = item.title?.rendered
 
-      if (clemDay && dish) {
-        const day = weekdayMapping[clemDay]
-        if (day) {
-          acc[day] = dish
+        if (clemDay && dish) {
+          const day = weekdayMapping[clemDay]
+          if (day) {
+            acc[day] = dish
+          }
         }
-      }
 
-      return acc
-    }, {})
+        return acc
+      }, {})
 
-    return menu
+    const result = menuForCurrentWeek(menu, "", now)
+    return result.status === "available" ? { ...result, periodConfirmed: true } : result
   }
 }

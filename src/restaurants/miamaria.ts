@@ -1,5 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
-import type { Restaurant } from "./restaurant"
+import type { MenuResult, Restaurant } from "./restaurant"
+import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
 
 const weekdayMapping: Record<string, string> = {
   "1": "mon",
@@ -16,19 +17,17 @@ export class MiaMarias implements Restaurant {
 
   constructor(public id: number) {}
 
-  async generateMenu(): Promise<Record<string, string> | undefined> {
-    const res = await fetch(this.url, {
-      cf: {
-        cacheTtl: 86400,
-      },
-    })
+  async generateMenu(now = new Date()): Promise<MenuResult> {
+    const res = await fetchRestaurant(this.url)
 
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, "text/html")
+    const pageText = doc.documentElement?.textContent || ""
+    if (pageIndicatesClosure(pageText)) return closed()
     const tabsContentContainer = doc.querySelector("div.e-n-tabs-content")
     if (!tabsContentContainer) {
       console.error(`[${this.restaurantName}] Main tabs content container (div.e-n-tabs-content) not found.`)
-      return undefined
+      return unavailable("lunch tabs not found")
     }
     const dayTabPanels = Array.from(
       tabsContentContainer.querySelectorAll(':scope > div[id^="e-n-tab-content-"][role="tabpanel"]'),
@@ -53,6 +52,6 @@ export class MiaMarias implements Restaurant {
       menu[weekday] = todaysDishText
     }
 
-    return menu
+    return menuForCurrentWeek(menu, pageText, now)
   }
 }
