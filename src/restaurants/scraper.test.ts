@@ -23,4 +23,8 @@ describe("scraper validity", () => {
   it("recognizes vacation closures", () => {
     expect(pageIndicatesClosure("SEMESTERSTÄNGT v. 28-32, vi öppnar åter 10 augusti")).toBe(true)
   })
+
+  it("ignores negated closure mentions", () => {
+    expect(pageIndicatesClosure("I sommar har vi inte sommarstängt, välkomna som vanligt")).toBe(false)
+  })
 })
