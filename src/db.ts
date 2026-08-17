@@ -29,7 +29,9 @@ export class Db {
 
     const { menu } = result
     if (!result.periodConfirmed && (await this.isUnchangedFromPreviousWeek(restaurant.id, menu, result.validFrom))) {
-      await this.deleteMenu(restaurant.id)
+      // Keep the previous row untouched: its stale validity already hides the menu, and
+      // it stays as the comparison baseline. Deleting it would let this same stale scrape
+      // be re-accepted with fresh validity on the very next refresh.
       return { status: "unavailable", reason: "unconfirmed menu is unchanged from the previous week" }
     }
 

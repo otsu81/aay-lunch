@@ -85,7 +85,8 @@ describe("Db", () => {
     )
   })
 
-  it("rejects an unchanged menu without confirmed source dates in a new week", async () => {
+  it("keeps rejecting an unchanged unconfirmed menu across repeated refreshes", async () => {
+    const db = new Db(env.db)
     const restaurant: Restaurant = {
       id: 997,
       restaurantName: "Unconfirmed fixture",
@@ -110,10 +111,17 @@ describe("Db", () => {
       .bind(restaurant.id, "Possibly stale lunch", "2026-08-03", "2026-08-07", "2026-08-03T08:30:00.000Z")
       .run()
 
-    await expect(new Db(env.db).refreshMenu(restaurant, new Date("2026-08-10T08:30:00.000Z"))).resolves.toEqual({
-      status: "unavailable",
-      reason: "unconfirmed menu is unchanged from the previous week",
-    })
-    expect(await env.db.prepare("SELECT 1 FROM menus WHERE restaurant_id = ?").bind(restaurant.id).first()).toBeNull()
+    const rejection = { status: "unavailable", reason: "unconfirmed menu is unchanged from the previous week" }
+
+    // First refresh in the new week detects the carried-over menu and rejects it.
+    await expect(db.refreshMenu(restaurant, new Date("2026-08-10T08:30:00.000Z"))).resolves.toEqual(rejection)
+    // A second refresh the same week must still reject it — it would resurface with fresh
+    // validity if the first rejection had deleted the comparison baseline.
+    await expect(db.refreshMenu(restaurant, new Date("2026-08-11T08:30:00.000Z"))).resolves.toEqual(rejection)
+
+    // The stale menu must never be visible in the new week.
+    expect(await db.getWeekdayMenuAllRestaurants("mon", new Date("2026-08-10T12:00:00.000Z"))).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: restaurant.restaurantName })]),
+    )
   })
 })
