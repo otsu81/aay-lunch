@@ -30,7 +30,9 @@ export function pageIndicatesClosure(text: string) {
 export function menuForCurrentWeek(menu: Menu, pageText: string, now = new Date()): MenuResult {
   if (!Object.values(menu).some((dish) => dish.trim())) return unavailable("no weekday menu parsed")
 
-  const sourceWeeks = Array.from(pageText.matchAll(/vecka\s*(\d{1,2})|lunch(?: menu|meny)?\s+week\s*(\d{1,2})/gi))
+  const sourceWeeks = Array.from(
+    pageText.matchAll(/\b(?:vecka|v\.)\s*(\d{1,2})\b|\blunch(?: menu|meny)?\s+week\s*(\d{1,2})\b/gi),
+  )
     .map((match) => Number(match[1] || match[2]))
     .filter((week) => week >= 1 && week <= 53)
   const currentWeek = getCurrentISOWeek(now)

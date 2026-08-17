@@ -71,6 +71,9 @@ export class ThapThim implements Restaurant {
       menu[weekdayMapping[wd]] = lines.filter(Boolean).join("<br>")
     }
 
-    return menuForCurrentWeek(menu, `vecka ${weekMap}`, now)
+    // weekMap is expected to be a bare week number; only treat it as a source-week hint
+    // when it actually looks like one, otherwise leave the menu unconfirmed.
+    const weekHint = /^\d{1,2}$/.test(String(weekMap ?? "").trim()) ? `vecka ${weekMap}` : ""
+    return menuForCurrentWeek(menu, weekHint, now)
   }
 }
