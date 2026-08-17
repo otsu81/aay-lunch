@@ -25,7 +25,7 @@ export class CafeLive implements Restaurant {
     const pageText = doc.documentElement?.textContent || ""
     if (pageIndicatesClosure(pageText)) return closed()
     const headings = Array.from(doc.querySelectorAll("h1, h2, h3, h4, h5, h6")) as HTMLElement[]
-    const heading = headings.find((h) => /lunchmeny/i.test(h.textContent || ""))
+    const heading = headings.find((h) => /\bmeny\b/i.test(h.textContent || ""))
     if (!heading) {
       console.error(`[${this.restaurantName}] lunch heading not found`)
       return unavailable("lunch heading not found")
@@ -40,8 +40,10 @@ export class CafeLive implements Restaurant {
         continue
       }
 
+      // Day headings sometimes split the label across multiple <strong> tags
+      // (e.g. an empty &nbsp; strong before the day), so read the whole paragraph.
       const strong = current.querySelector("strong")
-      const dayText = strong?.textContent?.trim()
+      const dayText = strong ? current.textContent?.trim() : undefined
       const dayKey = dayText ? weekdayMapping[dayText] : undefined
       if (!dayKey) {
         current = current.nextElementSibling as HTMLElement | null
