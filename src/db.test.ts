@@ -27,29 +27,32 @@ describe("Db", () => {
     ])
   })
 
-  it("removes a previous menu when a refresh fails", async () => {
-    const restaurant: Restaurant = {
-      id: 999,
-      restaurantName: "Failure fixture",
-      url: "https://example.com",
-      menuType: "weekly",
-      generateMenu: async () => ({ status: "unavailable", reason: "fixture failure" }),
-    }
-
+  async function seedMenu(id: number, name: string, dish: string) {
     await env.db
       .prepare("INSERT OR REPLACE INTO restaurants (id, name, url, menu_type) VALUES (?, ?, ?, ?)")
-      .bind(restaurant.id, restaurant.restaurantName, restaurant.url, restaurant.menuType)
+      .bind(id, name, "https://example.com", "weekly")
       .run()
     await env.db
       .prepare(
         "INSERT OR REPLACE INTO menus (restaurant_id, mon, valid_from, valid_until, fetched_at) VALUES (?, ?, ?, ?, ?)",
       )
-      .bind(restaurant.id, "Last week's lunch", "2026-07-27", "2026-07-31", "2026-07-27T08:30:00.000Z")
+      .bind(id, dish, "2026-08-03", "2026-08-07", "2026-08-03T08:30:00.000Z")
       .run()
+  }
+
+  it("removes the menu when the source reports a closure", async () => {
+    const restaurant: Restaurant = {
+      id: 999,
+      restaurantName: "Closure fixture",
+      url: "https://example.com",
+      menuType: "weekly",
+      generateMenu: async () => ({ status: "closed", reason: "semesterstängt" }),
+    }
+    await seedMenu(restaurant.id, restaurant.restaurantName, "Last week's lunch")
 
     await expect(new Db(env.db).refreshMenu(restaurant)).resolves.toEqual({
-      status: "unavailable",
-      reason: "fixture failure",
+      status: "closed",
+      reason: "semesterstängt",
     })
 
     const menu = await env.db
@@ -57,6 +60,47 @@ describe("Db", () => {
       .bind(restaurant.id)
       .first()
     expect(menu).toBeNull()
+  })
+
+  it("keeps a still-valid menu when a refresh comes back unavailable", async () => {
+    const db = new Db(env.db)
+    const restaurant: Restaurant = {
+      id: 996,
+      restaurantName: "Transient failure fixture",
+      url: "https://example.com",
+      menuType: "weekly",
+      generateMenu: async () => ({ status: "unavailable", reason: "transient parse failure" }),
+    }
+    await seedMenu(restaurant.id, restaurant.restaurantName, "Kept lunch")
+
+    await expect(db.refreshMenu(restaurant, new Date("2026-08-03T08:30:00.000Z"))).resolves.toEqual({
+      status: "unavailable",
+      reason: "transient parse failure",
+    })
+
+    expect(await db.getWeekdayMenuAllRestaurants("mon", new Date("2026-08-03T12:00:00.000Z"))).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: restaurant.restaurantName, dish: "Kept lunch" })]),
+    )
+  })
+
+  it("keeps a still-valid menu when a refresh throws", async () => {
+    const db = new Db(env.db)
+    const restaurant: Restaurant = {
+      id: 995,
+      restaurantName: "Outage fixture",
+      url: "https://example.com",
+      menuType: "weekly",
+      generateMenu: async () => {
+        throw new Error("restaurant fetch failed with HTTP 503")
+      },
+    }
+    await seedMenu(restaurant.id, restaurant.restaurantName, "Survives outage")
+
+    await expect(db.refreshMenu(restaurant, new Date("2026-08-03T08:30:00.000Z"))).rejects.toThrow("HTTP 503")
+
+    expect(await db.getWeekdayMenuAllRestaurants("mon", new Date("2026-08-03T12:00:00.000Z"))).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: restaurant.restaurantName, dish: "Survives outage" })]),
+    )
   })
 
   it("only returns menus valid for the requested week", async () => {

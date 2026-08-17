@@ -1,5 +1,5 @@
 import { getCurrentWeekdayDate } from "./dates"
-import type { Menu, MenuResult, Restaurant } from "./restaurants/restaurant"
+import type { Menu, Restaurant } from "./restaurants/restaurant"
 
 export interface WeekdayMenuRow {
   name: string
@@ -14,17 +14,20 @@ export class Db {
   constructor(private db: D1Database) {}
 
   async refreshMenu(restaurant: Restaurant, now = new Date()) {
-    let result: MenuResult
-    try {
-      result = await restaurant.generateMenu(now)
-      if (result.status !== "available") {
-        await this.deleteMenu(restaurant.id)
-        return result
-      }
-    } catch (error) {
-      // A missing menu is safer than retaining data from an earlier scrape.
+    // A failed fetch/parse throws and we deliberately leave the stored menu untouched, so
+    // a transient failure can't blank a still-valid current menu. The validity window hides
+    // it once its week passes, so keeping it carries no staleness risk.
+    const result = await restaurant.generateMenu(now)
+
+    if (result.status === "closed") {
+      // Positive evidence the restaurant isn't serving — hide it immediately.
       await this.deleteMenu(restaurant.id)
-      throw error
+      return result
+    }
+    if (result.status !== "available") {
+      // Couldn't produce a menu this run (parse miss, source unavailable). Keep whatever is
+      // stored rather than blanking a possibly-current menu on a transient failure.
+      return result
     }
 
     const { menu } = result
