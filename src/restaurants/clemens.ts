@@ -1,4 +1,4 @@
-import { getCurrentWeek } from "../dates"
+import { getMenuFreshnessWindow } from "../dates"
 import type { MenuResult, Restaurant } from "./restaurant"
 import { fetchRestaurant, menuForCurrentWeek } from "./scraper"
 
@@ -35,12 +35,14 @@ export class Clemens implements Restaurant {
     const res = await fetchRestaurant(this.scraperUrl)
 
     const data: LunchmenyItem[] = await res.json()
-    const validity = getCurrentWeek(now)
+    // The API returns the same five day-posts edited in place each week, so a "modified"
+    // date inside the current week's publishing window marks a dish as set for this week.
+    const freshness = getMenuFreshnessWindow(now)
 
     const menu = data
       .filter((item) => {
         const modified = item.modified?.slice(0, 10)
-        return modified >= validity.from && modified <= validity.until
+        return modified !== undefined && modified >= freshness.from && modified <= freshness.until
       })
       .reduce<Record<string, string>>((acc, item) => {
         const clemDay = item.acf?.veckodag?.[0]?.value
