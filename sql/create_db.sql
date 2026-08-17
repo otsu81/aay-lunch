@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS restaurants (
   menu_type TEXT CHECK(menu_type IN ('daily', 'weekly'))
 );
 
+-- Reference schema. The migrations in migrations/ are the source of truth; keep this in
+-- sync with them. valid_from/valid_until/fetched_at are nullable because migration 0001
+-- adds them to existing rows (SQLite can't add a NOT NULL column without a default). Rows
+-- with null validity are simply hidden by the date filter until their next refresh.
 CREATE TABLE IF NOT EXISTS menus (
   restaurant_id INTEGER PRIMARY KEY,
   mon TEXT,
@@ -12,9 +16,9 @@ CREATE TABLE IF NOT EXISTS menus (
   wed TEXT,
   thu TEXT,
   fri TEXT,
-  valid_from TEXT NOT NULL,
-  valid_until TEXT NOT NULL,
-  fetched_at TEXT NOT NULL,
+  valid_from TEXT,
+  valid_until TEXT,
+  fetched_at TEXT,
   FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
 );
 
