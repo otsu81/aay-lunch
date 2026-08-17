@@ -55,11 +55,15 @@ async function refreshMenus(db: D1Database) {
 
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
 
-  const completed = results.flatMap((result, index) =>
-    result.status === "fulfilled" ? [{ restaurant: restaurants[index].restaurantName, ...result.value }] : [],
+  const fulfilled = results.flatMap((result, index) =>
+    result.status === "fulfilled" ? [{ name: restaurants[index].restaurantName, result: result.value }] : [],
   )
-  const succeeded = completed.filter((result) => result.status === "available").map((result) => result.restaurant)
-  const unavailable = completed.filter((result) => result.status !== "available")
+  const succeeded = fulfilled.filter((entry) => entry.result.status === "available").map((entry) => entry.name)
+  const unavailable = fulfilled.flatMap((entry) =>
+    entry.result.status !== "available"
+      ? [{ restaurant: entry.name, status: entry.result.status, reason: entry.result.reason }]
+      : [],
+  )
   const failed = results.map((r, i) => (r.status === "rejected" ? restaurants[i].restaurantName : null)).filter(Boolean)
 
   if (failed.length) {

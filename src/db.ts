@@ -1,5 +1,5 @@
 import { getCurrentWeekdayDate } from "./dates"
-import type { Menu, Restaurant } from "./restaurants/restaurant"
+import type { Menu, MenuResult, Restaurant } from "./restaurants/restaurant"
 
 export interface WeekdayMenuRow {
   name: string
@@ -13,7 +13,7 @@ export interface WeekdayMenuRow {
 export class Db {
   constructor(private db: D1Database) {}
 
-  async refreshMenu(restaurant: Restaurant, now = new Date()) {
+  async refreshMenu(restaurant: Restaurant, now = new Date()): Promise<MenuResult> {
     // A failed fetch/parse throws and we deliberately leave the stored menu untouched, so
     // a transient failure can't blank a still-valid current menu. The validity window hides
     // it once its week passes, so keeping it carries no staleness risk.
