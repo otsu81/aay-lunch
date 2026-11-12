@@ -8,8 +8,8 @@
     "start": "wrangler dev",
     "test": "vitest run",
     "test:file": "vitest run",
-    "cf-typegen": "wrangler types",
-    "lint": "biome check",
+    "cf-typegen": "wrangler types -e dev",
+    "lint": "biome check && tsc --noEmit",
     "lint:fix": "biome check --write"
   },
   "devDependencies": {
