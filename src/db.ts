@@ -10,10 +10,56 @@ export interface WeekdayMenuRow {
   validUntil: string
 }
 
+export interface RefreshStatusRow {
+  name: string
+  url: string
+  lastAttemptAt: string | null
+  lastStatus: string | null
+}
+
 export class Db {
   constructor(private db: D1Database) {}
 
   async refreshMenu(restaurant: Restaurant, now = new Date()): Promise<MenuResult> {
+    let result: MenuResult
+    try {
+      result = await this.applyRefresh(restaurant, now)
+    } catch (error) {
+      await this.recordAttempt(restaurant, now, "failed", String(error))
+      throw error
+    }
+    await this.recordAttempt(restaurant, now, result.status, result.status === "available" ? null : result.reason)
+    return result
+  }
+
+  private async recordAttempt(restaurant: Restaurant, now: Date, status: string, reason: string | null) {
+    await this.db
+      .prepare(
+        `
+        INSERT INTO restaurants(id, name, url, menu_type, last_attempt_at, last_status, last_reason)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (id) DO UPDATE SET
+          name=excluded.name,
+          url=excluded.url,
+          menu_type=excluded.menu_type,
+          last_attempt_at=excluded.last_attempt_at,
+          last_status=excluded.last_status,
+          last_reason=excluded.last_reason;
+        `,
+      )
+      .bind(
+        restaurant.id,
+        restaurant.restaurantName,
+        restaurant.url,
+        restaurant.menuType,
+        now.toISOString(),
+        status,
+        reason,
+      )
+      .run()
+  }
+
+  private async applyRefresh(restaurant: Restaurant, now: Date): Promise<MenuResult> {
     // A failed fetch/parse throws and we deliberately leave the stored menu untouched, so
     // a transient failure can't blank a still-valid current menu. The validity window hides
     // it once its week passes, so keeping it carries no staleness risk.
@@ -121,6 +167,15 @@ export class Db {
       .bind(date, date)
       .all<WeekdayMenuRow>()
 
+    return results
+  }
+
+  async getRefreshStatuses(): Promise<RefreshStatusRow[]> {
+    const { results } = await this.db
+      .prepare(
+        "SELECT name, url, last_attempt_at AS lastAttemptAt, last_status AS lastStatus FROM restaurants ORDER BY id",
+      )
+      .all<RefreshStatusRow>()
     return results
   }
 }

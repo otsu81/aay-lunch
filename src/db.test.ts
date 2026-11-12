@@ -10,7 +10,10 @@ describe("Db", () => {
         id INTEGER PRIMARY KEY,
         name TEXT,
         url TEXT,
-        menu_type TEXT CHECK(menu_type IN ('daily', 'weekly'))
+        menu_type TEXT CHECK(menu_type IN ('daily', 'weekly')),
+        last_attempt_at TEXT,
+        last_status TEXT,
+        last_reason TEXT
       )`),
       env.db.prepare(`CREATE TABLE IF NOT EXISTS menus (
         restaurant_id INTEGER PRIMARY KEY,

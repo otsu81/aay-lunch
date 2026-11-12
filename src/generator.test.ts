@@ -15,6 +15,7 @@ describe("Generator", () => {
           validUntil: "2026-08-07",
         },
       ],
+      getRefreshStatuses: async () => [],
     } as unknown as Db
 
     const html = await new Generator(db).generateWeekdayMenu("thu")

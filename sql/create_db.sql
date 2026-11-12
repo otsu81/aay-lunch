@@ -2,7 +2,10 @@ CREATE TABLE IF NOT EXISTS restaurants (
   id INTEGER PRIMARY KEY,
   name TEXT,
   url TEXT,
-  menu_type TEXT CHECK(menu_type IN ('daily', 'weekly'))
+  menu_type TEXT CHECK(menu_type IN ('daily', 'weekly')),
+  last_attempt_at TEXT,
+  last_status TEXT,
+  last_reason TEXT
 );
 
 -- Reference schema. The migrations in migrations/ are the source of truth; keep this in

@@ -19,6 +19,10 @@ export function getCurrentWeek(now = new Date()) {
   }
 }
 
+export function getStockholmDate(date = new Date()) {
+  return format(toZonedTime(date, "Europe/Stockholm"), "yyyy-MM-dd")
+}
+
 export function getCurrentISOWeek(now = new Date()) {
   return getISOWeek(toZonedTime(now, "Europe/Stockholm"))
 }
