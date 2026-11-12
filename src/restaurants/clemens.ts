@@ -1,62 +1,30 @@
-import { getMenuFreshnessWindow } from "../dates"
+import type { HTMLElement } from "linkedom"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { fetchRestaurant, menuForCurrentWeek } from "./scraper"
-
-const weekdayMapping: Record<string, string> = {
-  man: "mon",
-  tis: "tue",
-  ons: "wed",
-  tor: "thu",
-  fre: "fri",
-}
-
-interface LunchmenyItem {
-  modified: string
-  title: {
-    rendered: string
-  }
-  acf: {
-    veckodag: Array<{
-      value: string
-      label: string
-    }>
-  }
-}
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
 
 export class Clemens implements Restaurant {
   public id = 4
   public restaurantName = "Clemens Kött & Husman"
-  private scraperUrl = "https://olleburl.in/clemens/wp-json/wp/v2/lunchmeny"
   public url = "https://www.clemenskott.se/restaurang/"
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
-    const res = await fetchRestaurant(this.scraperUrl)
+    const { doc, pageText } = await fetchDocument(this.url)
+    if (pageIndicatesClosure(pageText)) return closed()
 
-    const data: LunchmenyItem[] = await res.json()
-    // The API returns the same five day-posts edited in place each week, so a "modified"
-    // date inside the current week's publishing window marks a dish as set for this week.
-    const freshness = getMenuFreshnessWindow(now)
+    const heading = (Array.from(doc.querySelectorAll("legend h2")) as HTMLElement[]).find((h) =>
+      /veckans lunchmeny/i.test(h.textContent ?? ""),
+    )
+    const lunch = heading?.closest("fieldset")
+    if (!lunch) return unavailable("weekly lunch menu not found")
 
-    const menu = data
-      .filter((item) => {
-        const modified = item.modified?.slice(0, 10)
-        return modified !== undefined && modified >= freshness.from && modified <= freshness.until
-      })
-      .reduce<Record<string, string>>((acc, item) => {
-        const clemDay = item.acf?.veckodag?.[0]?.value
-        const dish = item.title?.rendered
+    const menu: Record<string, string> = {}
 
-        if (clemDay && dish) {
-          const day = weekdayMapping[clemDay]
-          if (day) {
-            acc[day] = dish
-          }
-        }
+    for (const entry of lunch.querySelectorAll(":scope > div") as HTMLElement[]) {
+      const day = swedishWeekday(entry.querySelector(".font-bold")?.textContent)
+      const dish = entry.querySelector(".italic")?.textContent?.replace(/\s+/g, " ").trim()
+      if (day && dish) menu[day] = dish
+    }
 
-        return acc
-      }, {})
-
-    const result = menuForCurrentWeek(menu, "", now)
-    return result.status === "available" ? { ...result, periodConfirmed: true } : result
+    return menuForCurrentWeek(menu, pageText, now)
   }
 }
