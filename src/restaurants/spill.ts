@@ -44,12 +44,10 @@ function mergeParentheticalLines(lines: string[]) {
 }
 
 export class Spill implements Restaurant {
+  public id = 1
   public restaurantName = "Spill Dockan"
   public url = "https://www.restaurangspill.se/"
-  public menuType = "daily"
   private pageUrl = "https://cms.restaurangspill.se/wp-json/wp/v2/pages/12?_fields=acf,modified"
-
-  constructor(public id: number) {}
 
   async generateMenu(_now = new Date()): Promise<MenuResult> {
     const res = await fetchRestaurant(this.pageUrl)

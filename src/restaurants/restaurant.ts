@@ -13,10 +13,11 @@ export type MenuResult =
       reason: string
     }
 
+export type RefreshStatus = MenuResult["status"] | "failed"
+
 export interface Restaurant {
   generateMenu(now?: Date): Promise<MenuResult>
   id: number
   restaurantName: string
   url: string
-  menuType: string
 }

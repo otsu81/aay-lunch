@@ -24,12 +24,10 @@ interface LunchmenyItem {
 }
 
 export class Clemens implements Restaurant {
+  public id = 4
   public restaurantName = "Clemens Kött & Husman"
-  public menuType = "weekly"
   private scraperUrl = "https://olleburl.in/clemens/wp-json/wp/v2/lunchmeny"
   public url = "https://www.clemenskott.se/restaurang/"
-
-  constructor(public id: number) {}
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
     const res = await fetchRestaurant(this.scraperUrl)

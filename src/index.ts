@@ -3,72 +3,37 @@ import { format, toZonedTime } from "date-fns-tz"
 import { type Context, Hono } from "hono"
 import { Db } from "./db"
 import { Generator } from "./generator"
-import { CafeLive } from "./restaurants/cafelive"
-import { Clemens } from "./restaurants/clemens"
-import { Kolgas } from "./restaurants/kolgas"
-import { MiaMarias } from "./restaurants/miamaria"
-import { Niagara } from "./restaurants/niagara"
-import { P2 } from "./restaurants/p2"
-import type { Restaurant } from "./restaurants/restaurant"
-import { Saltimporten } from "./restaurants/saltimporten"
-import { Spill } from "./restaurants/spill"
-import { Valfarden } from "./restaurants/valfarden"
-import { Varv } from "./restaurants/varv"
+import { restaurants } from "./restaurants/all"
 
 const weekdays = new Set(["mon", "tue", "wed", "thu", "fri"])
 
 const hono = new Hono<{ Bindings: Env }>()
 
-async function getWeekday(day?: string): Promise<string> {
-  if (day && weekdays.has(day)) return day
-  const now = new Date()
-  const sweDate = toZonedTime(now, "Europe/Stockholm")
-  const weekday = format(sweDate, "EEE", {
-    locale: enUS,
-  }).toLowerCase()
-
-  return weekday
+function getWeekday(): string {
+  return format(toZonedTime(new Date(), "Europe/Stockholm"), "EEE", { locale: enUS }).toLowerCase()
 }
 
 async function getWeekdayMenu(weekday: string, c: Context<{ Bindings: Env }>) {
-  const resDb = new Db(c.env.db)
-  const gen = new Generator(resDb)
-  const todaysMenu = await gen.generateWeekdayMenu(weekday)
-
-  return c.html(todaysMenu)
+  const gen = new Generator(new Db(c.env.db), restaurants)
+  return c.html(await gen.generateWeekdayMenu(weekday))
 }
 
 async function refreshMenus(db: D1Database) {
   const resDb = new Db(db)
-  const restaurants: Restaurant[] = [
-    new Varv(0),
-    new Spill(1),
-    new MiaMarias(2),
-    new P2(3),
-    new Clemens(4),
-    new Niagara(5),
-    new Valfarden(6),
-    new CafeLive(7),
-    new Saltimporten(8),
-    new Kolgas(9),
-  ]
-
   const results = await Promise.allSettled(restaurants.map((r) => resDb.refreshMenu(r)))
 
-  const fulfilled = results.flatMap((result, index) =>
-    result.status === "fulfilled" ? [{ name: restaurants[index].restaurantName, result: result.value }] : [],
-  )
-  const succeeded = fulfilled.filter((entry) => entry.result.status === "available").map((entry) => entry.name)
-  const unavailable = fulfilled.flatMap((entry) =>
-    entry.result.status !== "available"
-      ? [{ restaurant: entry.name, status: entry.result.status, reason: entry.result.reason }]
-      : [],
-  )
-  const failed = results.map((r, i) => (r.status === "rejected" ? restaurants[i].restaurantName : null)).filter(Boolean)
+  const succeeded: string[] = []
+  const unavailable: { restaurant: string; status: string; reason: string }[] = []
+  const failed: string[] = []
+  results.forEach((result, i) => {
+    const name = restaurants[i].restaurantName
+    if (result.status === "rejected") failed.push(name)
+    else if (result.value.status === "available") succeeded.push(name)
+    else unavailable.push({ restaurant: name, status: result.value.status, reason: result.value.reason })
+  })
 
-  if (failed.length) {
-    console.error(`failed to refresh: ${failed.join(", ")}`)
-  }
+  if (failed.length) console.error(`failed to refresh: ${failed.join(", ")}`)
+  for (const u of unavailable) console.warn(`${u.restaurant} ${u.status}: ${u.reason}`)
 
   return { succeeded, unavailable, failed }
 }
@@ -80,13 +45,11 @@ hono.get("/refresh", async (c) => {
 
 hono.get("/:weekday", async (c) => {
   const weekday = c.req.param("weekday")
-  if (weekdays.has(weekday)) return getWeekdayMenu(weekday, c)
-
-  return c.status(403)
+  return weekdays.has(weekday) ? getWeekdayMenu(weekday, c) : c.notFound()
 })
 
 hono.get("/", async (c) => {
-  const weekday = await getWeekday()
+  const weekday = getWeekday()
 
   if (weekday === "sat" || weekday === "sun") {
     return c.text("go home and be a family man, there's no lunch menu on weekends")

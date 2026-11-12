@@ -1,26 +1,33 @@
 import { getStockholmDate } from "./dates"
-import type { Db, RefreshStatusRow } from "./db"
+import type { Db, WeekdayMenuRow } from "./db"
+import type { Restaurant } from "./restaurants/restaurant"
+
+type Entry = { restaurant: Restaurant; row?: WeekdayMenuRow }
+
+const link = ({ restaurant }: Entry) =>
+  `<a href="${restaurant.url}" target="_blank" rel="noopener noreferrer">${restaurant.restaurantName}</a>`
 
 export class Generator {
-  constructor(private db: Db) {}
+  constructor(
+    private db: Db,
+    private restaurants: Restaurant[],
+  ) {}
 
   private parseMenuItems(dish: string): string[] {
     return dish
       .split(/<br\s*\/?>/)
       .map((item) => item.trim())
-      .filter((item) => item && item !== "undefined")
+      .filter(Boolean)
   }
 
-  private refreshNotice(statuses: RefreshStatusRow[], rendered: Set<string>, now: Date) {
+  private refreshNotice(missing: Entry[], now: Date) {
     const today = getStockholmDate(now)
+    const isFailed = ({ row }: Entry) =>
+      !!row?.lastAttemptAt && getStockholmDate(new Date(row.lastAttemptAt)) === today && row.lastStatus !== "available"
     // Closed is a deliberate absence, not a scraper problem.
-    const missing = statuses.filter((s) => !rendered.has(s.name) && s.lastStatus !== "closed")
-    const attemptedToday = (s: RefreshStatusRow) =>
-      s.lastAttemptAt !== null && getStockholmDate(new Date(s.lastAttemptAt)) === today
-    const isFailed = (s: RefreshStatusRow) => attemptedToday(s) && s.lastStatus !== "available"
-    const link = (s: RefreshStatusRow) => `<a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.name}</a>`
-    const failed = missing.filter(isFailed).map(link)
-    const notFetched = missing.filter((s) => !isFailed(s)).map(link)
+    const notClosed = missing.filter(({ row }) => row?.lastStatus !== "closed")
+    const failed = notClosed.filter(isFailed).map(link)
+    const notFetched = notClosed.filter((e) => !isFailed(e)).map(link)
 
     const lines = [
       failed.length ? `failed to fetch: ${failed.join(", ")}` : "",
@@ -30,11 +37,13 @@ export class Generator {
   }
 
   async generateWeekdayMenu(weekday: string, now = new Date()) {
-    const [results, statuses] = await Promise.all([
-      this.db.getWeekdayMenuAllRestaurants(weekday, now),
-      this.db.getRefreshStatuses(),
-    ])
-    const refreshNotice = this.refreshNotice(statuses, new Set(results.map((r) => r.name)), now)
+    const rows = new Map((await this.db.getWeekdayMenus(weekday, now)).map((row) => [row.id, row]))
+    const entries = this.restaurants.map((restaurant) => ({ restaurant, row: rows.get(restaurant.id) }))
+    const shown = entries.filter((e): e is Required<Entry> => !!e.row?.dish)
+    const refreshNotice = this.refreshNotice(
+      entries.filter((e) => !e.row?.dish),
+      now,
+    )
 
     const days = [
       { label: "Mon", path: "/mon" },
@@ -52,18 +61,19 @@ export class Generator {
       })
       .join("")
 
-    const rows = results
-      .map((r) => {
-        const items = this.parseMenuItems(r.dish)
-        const listItems = items.map((item) => `<li>${item}</li>`).join("")
+    const tableRows = shown
+      .map(({ restaurant, row }) => {
+        const listItems = this.parseMenuItems(row.dish ?? "")
+          .map((item) => `<li>${item}</li>`)
+          .join("")
         const fetchedAt = new Intl.DateTimeFormat("sv-SE", {
           dateStyle: "medium",
           timeStyle: "short",
           timeZone: "Europe/Stockholm",
-        }).format(new Date(r.fetchedAt))
-        const freshness = `Menu fetched ${fetchedAt}; valid ${r.validFrom} through ${r.validUntil}`
+        }).format(new Date(row.fetchedAt ?? ""))
+        const freshness = `Menu fetched ${fetchedAt}; valid ${row.validFrom} through ${row.validUntil}`
         return `<tr>
-        <td class="restaurant"><a href="${r.url}" target="_blank" rel="noopener noreferrer" title="${freshness}">${r.name}</a></td>
+        <td class="restaurant"><a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" title="${freshness}">${restaurant.restaurantName}</a></td>
         <td><ul>${listItems}</ul></td>
       </tr>`
       })
@@ -211,7 +221,7 @@ export class Generator {
   <main>
     <table>
       <tbody>
-        ${rows}
+        ${tableRows}
       </tbody>
     </table>
   </main>

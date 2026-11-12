@@ -15,11 +15,9 @@ function cleanText(text?: string) {
 }
 
 export class Varv implements Restaurant {
+  public id = 0
   public restaurantName = "Varv Malmö"
   public url = "https://www.varvmalmo.com/menu"
-  public menuType = "weekly"
-
-  constructor(public id: number) {}
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
     const res = await fetchRestaurant(this.url, {

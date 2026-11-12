@@ -11,11 +11,9 @@ const weekdayMapping: Record<string, string> = {
 }
 
 export class CafeLive implements Restaurant {
+  public id = 7
   public restaurantName = "Café Live"
   public url = "https://cafelive.se/"
-  public menuType = "weekly"
-
-  constructor(public id: number) {}
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
     const res = await fetchRestaurant(this.url)
