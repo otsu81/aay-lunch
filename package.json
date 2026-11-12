@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler d1 migrations apply aay-lunch-prod --remote -e prod && wrangler deploy -e prod",
     "dev": "wrangler d1 migrations apply aay-lunch --local -e dev && wrangler dev -e dev",
     "start": "wrangler dev",
     "test": "vitest run",

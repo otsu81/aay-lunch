@@ -6,4 +6,4 @@ Is a restaurant missing? Make a PR!
 
 ## Dev
 
-Uses bun. `bun run dev` sets up local D1 and starts wrangler.
+Uses bun. `bun run dev` applies D1 migrations locally and starts wrangler. `bun run deploy` applies D1 migrations to prod, then deploys to prod.
