@@ -1,41 +1,8 @@
 import { env } from "cloudflare:test"
-import { beforeAll, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 import app from "./index"
 
-// This test runs inside the Workers runtime with real D1 bindings
 describe("worker integration", () => {
-  beforeAll(async () => {
-    // Set up the database schema using batch() for multiple statements
-    await env.db.batch([
-      env.db.prepare(`CREATE TABLE IF NOT EXISTS restaurants (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        url TEXT,
-        menu_type TEXT CHECK(menu_type IN ('daily', 'weekly')),
-        last_attempt_at TEXT,
-        last_status TEXT,
-        last_reason TEXT
-      )`),
-      env.db.prepare(`CREATE TABLE IF NOT EXISTS menus (
-        restaurant_id INTEGER PRIMARY KEY,
-        mon TEXT,
-        tue TEXT,
-        wed TEXT,
-        thu TEXT,
-        fri TEXT,
-        valid_from TEXT NOT NULL,
-        valid_until TEXT NOT NULL,
-        fetched_at TEXT NOT NULL,
-        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
-      )`),
-      env.db.prepare(`CREATE TABLE IF NOT EXISTS metadata (
-        key TEXT PRIMARY KEY,
-        value TEXT,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`),
-    ])
-  })
-
   it("GET / returns html on weekdays", async () => {
     const res = await app.fetch(new Request("http://localhost/"), env)
     // Will be 200 on weekdays, text response on weekends

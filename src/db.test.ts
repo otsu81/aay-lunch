@@ -1,35 +1,9 @@
 import { env } from "cloudflare:test"
-import { beforeAll, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 import { Db } from "./db"
 import type { Restaurant } from "./restaurants/restaurant"
 
 describe("Db", () => {
-  beforeAll(async () => {
-    await env.db.batch([
-      env.db.prepare(`CREATE TABLE IF NOT EXISTS restaurants (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        url TEXT,
-        menu_type TEXT CHECK(menu_type IN ('daily', 'weekly')),
-        last_attempt_at TEXT,
-        last_status TEXT,
-        last_reason TEXT
-      )`),
-      env.db.prepare(`CREATE TABLE IF NOT EXISTS menus (
-        restaurant_id INTEGER PRIMARY KEY,
-        mon TEXT,
-        tue TEXT,
-        wed TEXT,
-        thu TEXT,
-        fri TEXT,
-        valid_from TEXT NOT NULL,
-        valid_until TEXT NOT NULL,
-        fetched_at TEXT NOT NULL,
-        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id)
-      )`),
-    ])
-  })
-
   async function seedMenu(id: number, name: string, dish: string) {
     await env.db
       .prepare("INSERT OR REPLACE INTO restaurants (id, name, url, menu_type) VALUES (?, ?, ?, ?)")
