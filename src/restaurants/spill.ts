@@ -49,20 +49,13 @@ export class Spill implements Restaurant {
   public url = "https://www.restaurangspill.se/"
   private pageUrl = "https://cms.restaurangspill.se/wp-json/wp/v2/pages/12?_fields=acf,modified"
 
-  async generateMenu(_now = new Date()): Promise<MenuResult> {
+  async generateMenu(): Promise<MenuResult> {
     const res = await fetchRestaurant(this.pageUrl)
     const page = (await res.json()) as SpillPage
     const { acf } = page
     const { datum, dagens_primar, dagens_veg } = acf
-    if (!datum) {
-      console.error(`[${this.restaurantName}] missing acf/datum`)
-      return unavailable("source date is missing")
-    }
+    if (!datum) return unavailable("source date is missing")
     const date = datum.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")
-    if (!date) {
-      console.error(`[${this.restaurantName}] missing acf/weekday`)
-      return unavailable("source date is invalid")
-    }
 
     const primary = mergeParentheticalLines(htmlToLines(dagens_primar))
     const veg = mergeParentheticalLines(htmlToLines(dagens_veg))
@@ -71,12 +64,9 @@ export class Spill implements Restaurant {
     if (primary.length) lines.push(primary.join("<br>"))
     if (veg.length) lines.push(`Vegetarisk: ${veg.join("<br>")}`)
 
-    if (!lines.length) {
-      console.error(`[${this.restaurantName}] empty dish lines`)
-      return unavailable("dish lines are empty")
-    }
+    if (!lines.length) return unavailable("dish lines are empty")
 
-    const day = weekdayMapping[new Date(date).getDay()]
+    const day = weekdayMapping[new Date(date).getUTCDay()]
     if (!day) return unavailable("source date is not a weekday")
     return menuForDate({ [day]: lines.join("<br>") }, date)
   }

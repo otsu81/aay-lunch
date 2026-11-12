@@ -1,14 +1,6 @@
-import { DOMParser, type HTMLElement } from "linkedom"
+import type { HTMLElement } from "linkedom"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
-
-const weekdayMapping: Record<string, string> = {
-  måndag: "mon",
-  tisdag: "tue",
-  onsdag: "wed",
-  torsdag: "thu",
-  fredag: "fri",
-}
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
 
 export class Saltimporten implements Restaurant {
   public id = 8
@@ -16,10 +8,7 @@ export class Saltimporten implements Restaurant {
   public url = "https://www.saltimporten.com/"
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
-    const res = await fetchRestaurant(this.url)
-    const html = await res.text()
-    const doc = new DOMParser().parseFromString(html, "text/html")
-    const pageText = doc.documentElement?.textContent || ""
+    const { doc, pageText } = await fetchDocument(this.url)
     if (pageIndicatesClosure(pageText)) return closed()
 
     const container = doc.querySelector(
@@ -29,20 +18,13 @@ export class Saltimporten implements Restaurant {
 
     const menu: Record<string, string> = {}
 
-    const ps = container.querySelectorAll("p") as HTMLElement[]
+    for (const p of container.querySelectorAll("p") as HTMLElement[]) {
+      const weekday = p.querySelector("strong")
+      const day = swedishWeekday(weekday?.textContent)
+      const dish = weekday?.nextSibling?.textContent
+      if (day && dish) menu[day] = dish
+    }
 
-    ps.forEach((p) => {
-      const strongElement = p.querySelector("strong") // assume the weekday is strong
-      if (!strongElement) return
-      const next = strongElement.nextSibling
-
-      const dayText = strongElement.textContent.toLowerCase().trim()
-      const dish = next.textContent
-
-      const day = weekdayMapping[dayText]
-      if (!day) return
-      menu[day] = dish
-    })
     return menuForCurrentWeek(menu, pageText, now)
   }
 }

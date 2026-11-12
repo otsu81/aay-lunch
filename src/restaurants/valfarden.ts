@@ -1,14 +1,6 @@
-import { DOMParser, type HTMLElement } from "linkedom"
+import type { HTMLElement } from "linkedom"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
-
-const weekdayMapping: Record<string, string> = {
-  måndag: "mon",
-  tisdag: "tue",
-  onsdag: "wed",
-  torsdag: "thu",
-  fredag: "fri",
-}
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
 
 export class Valfarden implements Restaurant {
   public id = 6
@@ -16,43 +8,32 @@ export class Valfarden implements Restaurant {
   public url = "https://valfarden.nu/dagens-lunch/"
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
-    const res = await fetchRestaurant(this.url)
-    const html = await res.text()
-    const doc = new DOMParser().parseFromString(html, "text/html")
-    const pageText = doc.documentElement?.textContent || ""
+    const { doc, pageText } = await fetchDocument(this.url)
     if (pageIndicatesClosure(pageText)) return closed()
 
     const section = doc.querySelector("article section:nth-of-type(2)")
     if (!section) return unavailable("lunch section not found")
 
     const menu: Record<string, string> = {}
-    let currentDayKey: string | null = null
+    let currentDay: string | undefined
     let currentDishes: string[] = []
-
-    const ps = section.querySelectorAll("p") as HTMLElement[]
-
-    ps.forEach((p) => {
-      const txt = p.textContent?.trim() || ""
-      const dayHeaderMatch = txt.match(/^(Måndag|Tisdag|Onsdag|Torsdag|Fredag)/i)
-      if (dayHeaderMatch) {
-        if (currentDayKey) {
-          menu[currentDayKey] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
-        }
-        const daySw = dayHeaderMatch[1].toLowerCase()
-        currentDayKey = weekdayMapping[daySw]
-        currentDishes = []
-        return
-      }
-
-      if (txt === "–" || txt === "—" || txt === "-" || txt === "") return // skip separators
-
-      currentDishes.push(txt)
-    })
-
-    // flush last day after loop
-    if (currentDayKey) {
-      menu[currentDayKey] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
+    const flush = () => {
+      if (currentDay) menu[currentDay] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
     }
+
+    for (const p of section.querySelectorAll("p") as HTMLElement[]) {
+      const txt = p.textContent?.normalize("NFC").trim() || ""
+      const dayHeader = txt.match(/^(Måndag|Tisdag|Onsdag|Torsdag|Fredag)/i)
+      if (dayHeader) {
+        flush()
+        currentDay = swedishWeekday(dayHeader[1])
+        currentDishes = []
+      } else if (!["", "-", "–", "—"].includes(txt)) {
+        currentDishes.push(txt)
+      }
+    }
+    flush()
+
     return menuForCurrentWeek(menu, pageText, now)
   }
 }

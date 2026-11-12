@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { menuForCurrentWeek, pageIndicatesClosure } from "./scraper"
+import { menuForCurrentWeek, pageIndicatesClosure, swedishWeekday } from "./scraper"
 
 describe("scraper validity", () => {
   const now = new Date("2026-08-06T08:30:00.000Z")
@@ -41,5 +41,11 @@ describe("scraper validity", () => {
 
   it("ignores negated closure mentions", () => {
     expect(pageIndicatesClosure("I sommar har vi inte sommarstängt, välkomna som vanligt")).toBe(false)
+  })
+
+  it("maps weekday labels regardless of case, padding, or decomposed å", () => {
+    expect(swedishWeekday("MA\u030aNDAG\u00a0")).toBe("mon")
+    expect(swedishWeekday(" Fredag ")).toBe("fri")
+    expect(swedishWeekday("lördag")).toBeUndefined()
   })
 })

@@ -1,14 +1,6 @@
-import { DOMParser, type HTMLElement } from "linkedom"
+import type { HTMLElement } from "linkedom"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchRestaurant, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
-
-const weekdayMapping: Record<string, string> = {
-  måndag: "mon",
-  tisdag: "tue",
-  onsdag: "wed",
-  torsdag: "thu",
-  fredag: "fri",
-}
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
 
 export class Niagara implements Restaurant {
   public id = 5
@@ -16,10 +8,7 @@ export class Niagara implements Restaurant {
   public url = "https://restaurangniagara.se/lunch/"
 
   async generateMenu(now = new Date()): Promise<MenuResult> {
-    const res = await fetchRestaurant(this.url)
-    const html = await res.text()
-    const doc = new DOMParser().parseFromString(html, "text/html")
-    const pageText = doc.documentElement?.textContent || ""
+    const { doc, pageText } = await fetchDocument(this.url)
     if (pageIndicatesClosure(pageText)) return closed()
 
     const tabs = doc.querySelector(".e-n-tabs")
@@ -27,26 +16,19 @@ export class Niagara implements Restaurant {
 
     const menu: Record<string, string> = {}
 
-    const panels = tabs.querySelectorAll('[role="tabpanel"]') as HTMLElement[]
+    for (const panel of tabs.querySelectorAll('[role="tabpanel"]') as HTMLElement[]) {
+      const key = swedishWeekday(panel.querySelector("h3.elementor-heading-title")?.textContent)
+      if (!key) continue
 
-    panels.forEach((panel) => {
-      const heading = panel.querySelector("h3.elementor-heading-title")
-      const dayText = heading?.textContent?.trim().toLowerCase()
-      if (!dayText) return
-      const key = weekdayMapping[dayText]
-      if (!key) return
-
-      const items = Array.from(panel.querySelectorAll(".lunchmeny_container")).map((container) => {
-        const titleEl = (container as HTMLElement).querySelector(".lunch_title")
-        const descEl = (container as HTMLElement).querySelector(".lunch_desc")
-        const title = titleEl?.textContent?.trim() ?? "" // if there's no title just skip it
-        const desc = descEl?.innerHTML.trim().split("<br>")[0] ?? "" // only extract the swedish dish description
-
+      const items = (Array.from(panel.querySelectorAll(".lunchmeny_container")) as HTMLElement[]).map((container) => {
+        const title = container.querySelector(".lunch_title")?.textContent?.trim() ?? ""
+        // The description holds the Swedish text first, then an English translation.
+        const desc = container.querySelector(".lunch_desc")?.innerHTML.trim().split("<br>")[0] ?? ""
         return `<b>${title}</b>: ${desc}`
       })
 
       menu[key] = items.join("<br>")
-    })
+    }
 
     return menuForCurrentWeek(menu, pageText, now)
   }
