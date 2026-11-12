@@ -1,9 +1,4 @@
-import { applyD1Migrations, env } from "cloudflare:test"
+import { applyD1Migrations, type D1Migration } from "cloudflare:test"
+import { env } from "cloudflare:workers"
 
-declare module "cloudflare:test" {
-  interface ProvidedEnv extends Env {
-    TEST_MIGRATIONS: D1Migration[]
-  }
-}
-
-await applyD1Migrations(env.db, env.TEST_MIGRATIONS)
+await applyD1Migrations(env.db, (env as Env & { TEST_MIGRATIONS: D1Migration[] }).TEST_MIGRATIONS)

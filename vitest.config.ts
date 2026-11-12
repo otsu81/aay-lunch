@@ -1,13 +1,14 @@
-import { defineWorkersConfig, readD1Migrations } from "@cloudflare/vitest-pool-workers/config"
+import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-plugin"
+import { defineConfig } from "vitest/config"
 
-export default defineWorkersConfig(async () => ({
+export default defineConfig({
+  plugins: [
+    cloudflareTest(async () => ({
+      wrangler: { configPath: "./wrangler.jsonc", environment: "dev" },
+      miniflare: { bindings: { TEST_MIGRATIONS: await readD1Migrations("./migrations") } },
+    })),
+  ],
   test: {
     setupFiles: ["./src/test-setup.ts"],
-    poolOptions: {
-      workers: {
-        wrangler: { configPath: "./wrangler.jsonc", environment: "dev" },
-        miniflare: { bindings: { TEST_MIGRATIONS: await readD1Migrations("./migrations") } },
-      },
-    },
   },
-}))
+})
