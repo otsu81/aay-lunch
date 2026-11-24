@@ -1,0 +1,157 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`restaurant fixtures > parses Café Live 1`] = `
+{
+  "menu": {
+    "fri": "TORTILLASryggbiff, salsa, chilimajonnäs, sallad, koriander",
+    "mon": "KÖTTBULLARpotatis, gräddsås, rårörda lingon",
+    "thu": "ÄRTSOPPAfläsk, pannkakor",
+    "tue": "FISKGRYTA lax, potatis, vin, grädde, fänkålsfrö, dill",
+    "wed": "KYCKLINGINNERFILÈrostade potatisar, bearnaisesås, säsongens primörer",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses Clemens Kött & Husman 1`] = `
+{
+  "menu": {
+    "fri": "Wallenbergare med skirat smör, potatispuré, rårörda lingon & gröna ärtor.",
+    "mon": "-",
+    "thu": "Schnitzel med rosmarinpotatis, rödvinssås, vitlökssmör, gröna ärtor & citron.",
+    "tue": "Färsbiff med grönkålsstuvning, kokt potatis & bakad purjolök",
+    "wed": "Dansk fläskesteg",
+  },
+  "periodConfirmed": false,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses Kolgas 1`] = `
+{
+  "menu": {
+    "fri": "Raggmunkar med stekt Bacon och Lingon<br>Gräddstuvad Pytt i Panna med stekt ägg och rödbetor",
+    "mon": "Dansk Fläskesteg med potatis, sås, rödkål och äppelmos<br>Ugnsstekt Kycklingfilé med sås, ris och grönsaker",
+    "thu": "Ärtsoppa eller Fisksoppa, pannkakor med sylt och grädde<br>Fläsk Noisette med bearnaisesås, potatis och grönsaker",
+    "tue": "Stekt Strömming med potatismos, lingon och grönsaker<br>Kalops med rödbetor och potatis",
+    "wed": "Kålpudding med sås, potatis och lingon<br>Mexikanarkorv med stuvade makaroner, skysås och grönsaker",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses MiaMarias 1`] = `
+{
+  "menu": {
+    "fri": "Ugnsbakad fisk med chorizosmör, citronrostad potatis och bakade tomater.<br>Schnitzelfredag! Koreansk pankopanerad kycklingschnitzel med gochujangmajonnäs, pickladgurka, sesamrostad spetskål och ris.<br>Aubergine parmigiana med mozzarella, tomatsås, basilika och Grana Padano. Serverasmed ruccolasallad och vitlöksbröd.",
+    "mon": "Ugnsbakad sej med vitvinssås, citron, dill, gröna ärtor och kokt potatis.<br>Fransk kycklinggryta med dijonsenap, dragon, champinjoner och vitt vin. Serveras med ris.<br>Rostad blomkål med kryddig kikärtsragu, örtig bulgur, granatäpple och citronyoghurt",
+    "thu": "Ugnsbakad fisk med ört- och citrontäcke, kall romsås, kokt potatis och gröna ärtor.<br>Småländska isterband med dillstuvad potatis, inlagda rödbetor och grovkornig senap.<br>Filorulle fylld med fetaost, zucchini och örter. Serveras med tomatsallad och tzatziki.<br>Ärtsoppa med eller utan fläsk samt pannkaksbuffé.",
+    "tue": "Ugnsbakad kolja med brynt smör, kapris, citron, kokt potatis och rostade morötter<br>Wallenbergare med potatismos, skirat smör, gröna ärtor och rårörda lingon.<br>Spaghetti med ädelostsås, rostad zucchini, smörstekta päron, mandel och tranbär.",
+    "wed": "Citron- och örtbakad lax med rostade småtomater och oliver, serveras med rostad potatis ochbasilikayoghurt.<br>Baconlindad fläskfilé med portvinssås, potatisgratäng och smörstekta grönsaker.<br>Majsplättar med Västerbottensost, rostad paprikasalsa, avokadokräm och örtigbulgursallad.",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses Niagara 1`] = `
+{
+  "menu": {
+    "fri": "<b>Green</b>: Råraka med getostkräm, honungsrostade nötter, granatäpple och bakad rotselleri<br><b>Local</b>: Skinkschnitzel med kryddsmör, rostad potatis, gröna ärtor, citron, skysås och persilja(G)<br><b>Asia</b>: Tandoorikyckling med yoghurt, spenat, tomat, salladslök och koriander(L)<br><b>World Wide</b>: “Chemelico” Hamburgare med strimlat kött med karamelliserad lök, stekt ägg, salsa verde och rostad potatis(G)<br><b></b>: Vi erbjuder veganskt alternativ varje dag.",
+    "mon": "<b>Green</b>: Shakshuka med krämigt ägg, morot, kikärtor, ris och smetana<br><b>Local</b>: Köttfärslimpa med pressgurka, lingon, gräddsås, potatis och persilja(G/L)<br><b>World Wide</b>: Cajunbakad kyckling med ris, mango- &amp; fetaostsallad och limesås(L)<br><b>Asia</b>: Beef yakiniku med nudlar, edamamebönor, pak choi, lime och koriander<br><b></b>: Vi erbjuder veganskt alternativ varje dag.",
+    "thu": "<b>Green</b>: Palak paneer med naanbröd, ris, koriandersallad och kombi beyaz(G/L)<br><b>Local</b>: Skånsk helbakad kotlett med rostad potatis, ratatouille på zucchini &amp; aubergine, yoghurt och frissésallad(L)<br><b>World Wide</b>: “Chana masala” kikärtsgryta med ris, yoghurt, papadam och krispiga kikärtor(L)<br><b>Asia</b>: Tandoorikyckling med yoghurt, spenat, tomat, salladslök och koriander(L)<br><b></b>: Vi erbjuder veganskt alternativ varje dag.",
+    "tue": "<b>Green</b>: Öländsk lufsa med rårörda lingon, bakad- lök &amp; spetskål, färskost och persilja(G/L)<br><b>Local</b>: Havets wallenbergare med potatismos, gröna ärtor, fänkålssallad, citron, brynt smör och lingon(G/L)<br><b>World Wide</b>: Cajunbakad kyckling med ris, mango- &amp; fetaostsallad och limesås(L)<br><b>Asia</b>: Bossam, skivat fläskkött med kimchi, ssamsås, ris, limemajo och romansallad<br><b></b>: Vi erbjuder veganskt alternativ varje dag.",
+    "wed": "<b>Green</b>: Palak paneer med naanbröd, ris, koriandersallad och kombi beyaz(G/L)<br><b>Local</b>: Boeuf bourguignon, nattbakat högrev i vin med potatismos, sidfläsk, champinjoner, syltlök och persilja<br><b>World Wide</b>: “Chana masala” kikärtsgryta med ris, yoghurt, papadam och krispiga kikärtor(L)<br><b>Asia</b>: Bossam, skivat fläskkött med kimchi, ssamsås, ris, limemajo och romansallad<br><b></b>: Vi erbjuder veganskt alternativ varje dag.",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses P2 1`] = `
+{
+  "menu": {
+    "fri": "<b>GREEN</b>: Pannoumiburgare (grillost från Skåne) med paprikarelish, krispsallad, klyftpotatis & rökt chilimajjo<br><b>LOCAL</b>: Högrevsburgare med dijonmajjo, baconmarmelad, saltgurka & krispsallad<br><b>WORLD WIDE</b>: BBQ-marinerad Pluma med äpplesallad, gräslök/limemajjo & klyftpotatis<br><b>HAPPY FRIDAY!</b>: Vi bjuder alla på kaffe och nåt sött! Bra pris på dryck i baren. Vin/öl 65 kr, läsk/alkoholfri öl 30 kr. Varmt välkomna!",
+    "mon": "<b>GREEN</b>: Tofu korma med ingefära, kokosgrädde, cashewnötter, naan & myntayoghurt<br><b>LOCAL</b>: P2s köttbullar med pressgurka, sockrade lingon, gräddsås & rostad potatis<br><b>WORLD WIDE</b>: Kyckling tikka masala med tomat, ingefära, blomkål & myntayoghurt",
+    "thu": "<b>GREEN</b>: Sötpotatis- & jordnötsgryta med kikärtor, svartkål, lime, tomat samt kumminkryddat ris<br><b>LOCAL</b>: Porterstek med portersås, pressgurka, morot, svartvinbärsgelé & rostad potatis<br><b>WORLD WIDE</b>: Lasagne på blandfärs med mozzarella, vin, selleri, bechamel & rucolakräm",
+    "tue": "<b>GREEN</b>: Kikärtsbiffar med paprikakräm, zucchinisallad & vitlöksrostad potatis<br><b>LOCAL</b>: Rimmad sej med kapris, rödbeta, brynt smör & pepparrotskräm<br><b>WORLD WIDE</b>: Bibimbap med fläsk, stekt ägg, sesammajjo, soja bönor, päronkimchi, jordnötter & koriander",
+    "wed": "<b>GREEN</b>: Fylld pasta med spenat /ricotta samt taleggiosås, zucchini, syltade päron & valnötter<br><b>LOCAL</b>: Kålpudding med rårörda lingon, gräddsås & rostad potatis<br><b>World Wide</b>: Glazerade Buffalo chicken wings med bluecheese-dressing, majskolv & kålsallad",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses Saltimporten 1`] = `
+{
+  "menu": {
+    "fri": "Oxtartar / Tomat / Parmesan / Risoni",
+    "mon": "Fläsksida / Spetskål / Dragon / Vinbär",
+    "thu": "Tupp / Aubergine / Chipotle / Kakao",
+    "tue": "Oxtartar / Grönkål / Valnöt / Päron",
+    "wed": "Fläskarré / Paprika / Nduja / Persilja",
+  },
+  "periodConfirmed": false,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses Spill Dockan 1`] = `
+{
+  "menu": {
+    "tue": "Wallenbergare med potatismos, smält smör, lingon & gröna ärtor<br>Vegetarisk: Grönsaksbiff med potatismos, smält smör, lingon och gröna ärtor<br>Går att få som veganskt <3",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-24",
+  "validUntil": "2026-11-24",
+}
+`;
+
+exports[`restaurant fixtures > parses Varv Malmö 1`] = `
+{
+  "menu": {
+    "fri": "Schnitzel, potatoes, peas, café de paris, gravy<br>Pumpkin, cauliflower purée, kale, jerusalem artichoke chips",
+    "mon": "Beef tartare, anchovy mayonnaise, mizuna, walnuts, parmesan, fries<br>Gnocchi, ubriaco rosso, kale, mushroom, chives",
+    "thu": "Cottage pie (beef topped with potato mash<br>Tortelloni, brown butter, celeriac purée, capers, hazelnuts",
+    "tue": "Meatballs, potatoes, cucumber, lingonberry, pepper sauce<br>Baba ganoush, chickpeas, tabbouleh, parsley",
+    "wed": "Pollock, pointed cabbage, tomatoes, mussel sauce<br>Ricotta, artichoke, croutons, olives, pine nuts",
+  },
+  "periodConfirmed": true,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;
+
+exports[`restaurant fixtures > parses Välfärden 1`] = `
+{
+  "menu": {
+    "fri": "Koreansk grillad fläsksida, kimchi, syrlig örtsallad, krossade jordnötter, ingefärsmayo  & ris<br>Röd thaicurry med tofu, kokosmjölk, rostad pumpa, lime, ris & örtsallad med krossade jordnötter",
+    "mon": "Kantarellpasta med bacon, lagrad ost, vitlöksrostade haricot verts samt krispig schalottenlök<br>Smörrostad brysselkål, quinoakrisp, linser, rostad pumpakräm, dill & mandel",
+    "thu": "Stora köttbullar på fläsk & nöt, whiskey-gräddsås, lingon, gurka & potatismos<br>Pasta penne i gräddig tomatsås, linser, ricotta, basilika & rostade oliver",
+    "tue": "Sojabakad laxfilé med sotad purjo, rostad pumpa/sötpotatiskräm, edamame & sesam<br>Chili sin carne, rökiga bönor, rostad majs, chipotle, ris, avokadokräm, tortillachips & limegrönt",
+    "wed": "Chili con carne, rökiga bönor, chipotle, ris, avokadokräm, tortillachips & limegrönt<br>Vegansk kålpudding med lingon, gurka, kantarellsås & persiljepotatis",
+  },
+  "periodConfirmed": false,
+  "status": "available",
+  "validFrom": "2026-11-23",
+  "validUntil": "2026-11-27",
+}
+`;

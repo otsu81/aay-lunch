@@ -11,6 +11,13 @@
     }
   },
   "files": {
-    "includes": ["**", "!coverage", "!node_modules", "!worker-configuration.d.ts", "!.wrangler"]
+    "includes": [
+      "**",
+      "!coverage",
+      "!node_modules",
+      "!worker-configuration.d.ts",
+      "!.wrangler",
+      "!src/restaurants/fixtures"
+    ]
   }
 }
