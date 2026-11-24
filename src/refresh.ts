@@ -7,7 +7,7 @@ export async function refreshMenus(db: D1Database) {
   const results = await Promise.allSettled(restaurants.map((r) => refreshRestaurant(db, r)))
 
   const succeeded: string[] = []
-  const unavailable: { restaurant: string; status: string; reason: string }[] = []
+  const unavailable: { restaurant: string; status: Exclude<MenuResult["status"], "available">; reason: string }[] = []
   const failed: string[] = []
   results.forEach((result, i) => {
     const name = restaurants[i].name

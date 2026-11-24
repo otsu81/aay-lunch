@@ -1,6 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
 import { getWeekday, getWeekNumber, getWeekRange } from "../dates"
-import type { Menu, Weekday } from "../weekdays"
+import { type Menu, type Weekday, weekdays } from "../weekdays"
 
 export type MenuResult =
   | {
@@ -77,8 +77,27 @@ export function queryAll(root: QueryRoot, selector: string): HTMLElement[] {
   return Array.from(root.querySelectorAll(selector))
 }
 
-export function text(node?: { textContent: string | null } | null): string {
-  return node?.textContent?.replace(/\s+/g, " ").trim() ?? ""
+const ELEMENT_NODE = 1
+const TEXT_NODE = 3
+
+// Structural, so text nodes (firstChild, nextSibling) work as well as elements.
+interface TextSource {
+  nodeType: number
+  nodeName: string
+  textContent: string | null
+  childNodes: ArrayLike<TextSource>
+}
+
+export function text(node?: TextSource | null): string {
+  return node ? renderedText(node).replace(/\s+/g, " ").trim() : ""
+}
+
+// textContent drops <br>, gluing the words around it ("och<br>basilika").
+function renderedText(node: TextSource): string {
+  if (node.nodeType === TEXT_NODE) return node.textContent ?? ""
+  if (node.nodeType !== ELEMENT_NODE) return ""
+  if (node.nodeName === "BR") return " "
+  return Array.from(node.childNodes, renderedText).join("")
 }
 
 const weekdayNames: Record<string, Weekday> = {
@@ -112,11 +131,28 @@ export function pageIndicatesClosure(text: string) {
   return false
 }
 
-function hasDishes(menu: Menu) {
-  return Object.values(menu).some((dishes) => dishes.length > 0)
+const placeholders = new Set(["", "-", "–", "—"])
+
+// Sites fill empty dish slots with dashes; stored, they would render as a dish.
+export function isPlaceholder(dish: string) {
+  return placeholders.has(dish)
 }
 
-export function menuForCurrentWeek(menu: Menu, pageText: string, now: Date): MenuResult {
+function withoutPlaceholders(menu: Menu): Menu {
+  const result: Menu = {}
+  for (const day of weekdays) {
+    const dishes = menu[day]?.filter((dish) => !isPlaceholder(dish.text))
+    if (dishes?.length) result[day] = dishes
+  }
+  return result
+}
+
+function hasDishes(menu: Menu) {
+  return Object.keys(menu).length > 0
+}
+
+export function menuForCurrentWeek(parsed: Menu, pageText: string, now: Date): MenuResult {
+  const menu = withoutPlaceholders(parsed)
   if (!hasDishes(menu)) return unavailable("no weekday menu parsed")
 
   const sourceWeeks = Array.from(
@@ -138,7 +174,8 @@ export function menuForCurrentWeek(menu: Menu, pageText: string, now: Date): Men
   return { status: "available", menu, validFrom: validity.from, validUntil: validity.until, periodConfirmed }
 }
 
-export function menuForDate(menu: Menu, date: string): MenuResult {
+export function menuForDate(parsed: Menu, date: string): MenuResult {
+  const menu = withoutPlaceholders(parsed)
   if (!hasDishes(menu)) return unavailable("no weekday menu parsed")
   return { status: "available", menu, validFrom: date, validUntil: date, periodConfirmed: true }
 }

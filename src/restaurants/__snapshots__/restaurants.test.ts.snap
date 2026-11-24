@@ -5,17 +5,17 @@ exports[`restaurant fixtures > parses Café Live 1`] = `
   "menu": {
     "fri": [
       {
-        "text": "TORTILLASryggbiff, salsa, chilimajonnäs, sallad, koriander",
+        "text": "TORTILLAS ryggbiff, salsa, chilimajonnäs, sallad, koriander",
       },
     ],
     "mon": [
       {
-        "text": "KÖTTBULLARpotatis, gräddsås, rårörda lingon",
+        "text": "KÖTTBULLAR potatis, gräddsås, rårörda lingon",
       },
     ],
     "thu": [
       {
-        "text": "ÄRTSOPPAfläsk, pannkakor",
+        "text": "ÄRTSOPPA fläsk, pannkakor",
       },
     ],
     "tue": [
@@ -25,7 +25,7 @@ exports[`restaurant fixtures > parses Café Live 1`] = `
     ],
     "wed": [
       {
-        "text": "KYCKLINGINNERFILÈrostade potatisar, bearnaisesås, säsongens primörer",
+        "text": "KYCKLINGINNERFILÈ rostade potatisar, bearnaisesås, säsongens primörer",
       },
     ],
   },
@@ -42,11 +42,6 @@ exports[`restaurant fixtures > parses Clemens Kött & Husman 1`] = `
     "fri": [
       {
         "text": "Wallenbergare med skirat smör, potatispuré, rårörda lingon & gröna ärtor.",
-      },
-    ],
-    "mon": [
-      {
-        "text": "-",
       },
     ],
     "thu": [
@@ -131,10 +126,10 @@ exports[`restaurant fixtures > parses MiaMarias 1`] = `
         "text": "Ugnsbakad fisk med chorizosmör, citronrostad potatis och bakade tomater.",
       },
       {
-        "text": "Schnitzelfredag! Koreansk pankopanerad kycklingschnitzel med gochujangmajonnäs, pickladgurka, sesamrostad spetskål och ris.",
+        "text": "Schnitzelfredag! Koreansk pankopanerad kycklingschnitzel med gochujangmajonnäs, picklad gurka, sesamrostad spetskål och ris.",
       },
       {
-        "text": "Aubergine parmigiana med mozzarella, tomatsås, basilika och Grana Padano. Serverasmed ruccolasallad och vitlöksbröd.",
+        "text": "Aubergine parmigiana med mozzarella, tomatsås, basilika och Grana Padano. Serveras med ruccolasallad och vitlöksbröd.",
       },
     ],
     "mon": [
@@ -175,13 +170,13 @@ exports[`restaurant fixtures > parses MiaMarias 1`] = `
     ],
     "wed": [
       {
-        "text": "Citron- och örtbakad lax med rostade småtomater och oliver, serveras med rostad potatis ochbasilikayoghurt.",
+        "text": "Citron- och örtbakad lax med rostade småtomater och oliver, serveras med rostad potatis och basilikayoghurt.",
       },
       {
         "text": "Baconlindad fläskfilé med portvinssås, potatisgratäng och smörstekta grönsaker.",
       },
       {
-        "text": "Majsplättar med Västerbottensost, rostad paprikasalsa, avokadokräm och örtigbulgursallad.",
+        "text": "Majsplättar med Västerbottensost, rostad paprikasalsa, avokadokräm och örtig bulgursallad.",
       },
     ],
   },
@@ -508,7 +503,7 @@ exports[`restaurant fixtures > parses Välfärden 1`] = `
   "menu": {
     "fri": [
       {
-        "text": "Koreansk grillad fläsksida, kimchi, syrlig örtsallad, krossade jordnötter, ingefärsmayo  & ris",
+        "text": "Koreansk grillad fläsksida, kimchi, syrlig örtsallad, krossade jordnötter, ingefärsmayo & ris",
       },
       {
         "text": "Röd thaicurry med tofu, kokosmjölk, rostad pumpa, lime, ris & örtsallad med krossade jordnötter",

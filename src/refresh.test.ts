@@ -93,4 +93,21 @@ describe("refreshRestaurant", () => {
 
     expect(await mondayRow(restaurant.id, new Date("2026-08-10T12:00:00.000Z"))).toMatchObject({ menu: null })
   })
+
+  it("accepts an unconfirmed menu that differs from the previous week", async () => {
+    const restaurant = fixture(993, async () => ({
+      status: "available",
+      menu: { mon: [{ label: "Green", text: "Same lunch" }] },
+      validFrom: "2026-08-10",
+      validUntil: "2026-08-14",
+      periodConfirmed: false,
+    }))
+    await seedMenu(restaurant.id, "Same lunch")
+
+    const nextMonday = new Date("2026-08-10T08:30:00.000Z")
+    await expect(refreshRestaurant(env.db, restaurant, nextMonday)).resolves.toMatchObject({ status: "available" })
+    expect(await mondayRow(restaurant.id, nextMonday)).toMatchObject({
+      menu: { dishes: [{ label: "Green", text: "Same lunch" }] },
+    })
+  })
 })

@@ -1,5 +1,5 @@
 import type { Dish, Menu, Weekday } from "../weekdays"
-import { type HtmlRestaurant, parseWeekday, query, queryAll } from "./scraper"
+import { type HtmlRestaurant, isPlaceholder, parseWeekday, query, queryAll, text } from "./scraper"
 
 export const Valfarden: HtmlRestaurant = {
   id: 6,
@@ -19,15 +19,16 @@ export const Valfarden: HtmlRestaurant = {
       if (currentDay) menu[currentDay] = currentDishes.length ? currentDishes : [{ text: "Stängt" }]
     }
 
+    // Dishes are separated by dash paragraphs. Skipping them here, not only in the pipeline,
+    // keeps a day with nothing but separators "Stängt" instead of dropped.
     for (const p of queryAll(section, "p")) {
-      // Not text(): collapsing whitespace changes the stored dishes; T9 switches it deliberately.
-      const txt = p.textContent?.normalize("NFC").trim() || ""
-      const day = parseWeekday(txt.split(/\s+/)[0])
+      const txt = text(p)
+      const day = parseWeekday(txt.split(" ")[0])
       if (day) {
         flush()
         currentDay = day
         currentDishes = []
-      } else if (!["", "-", "–", "—"].includes(txt)) {
+      } else if (!isPlaceholder(txt)) {
         currentDishes.push({ text: txt })
       }
     }

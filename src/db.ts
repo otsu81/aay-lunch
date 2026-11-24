@@ -51,20 +51,14 @@ export async function upsertMenu(
   { menu, validFrom, validUntil }: { menu: Menu; validFrom: string; validUntil: string },
   fetchedAt: Date,
 ) {
+  const columns = [...weekdays, "valid_from", "valid_until", "fetched_at"]
   await db
     .prepare(
       `
-      INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri, valid_from, valid_until, fetched_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO menus (restaurant_id, ${columns.join(", ")})
+      VALUES (?, ${columns.map(() => "?").join(", ")})
       ON CONFLICT(restaurant_id) DO UPDATE SET
-        mon=excluded.mon,
-        tue=excluded.tue,
-        wed=excluded.wed,
-        thu=excluded.thu,
-        fri=excluded.fri,
-        valid_from=excluded.valid_from,
-        valid_until=excluded.valid_until,
-        fetched_at=excluded.fetched_at;
+        ${columns.map((column) => `${column}=excluded.${column}`).join(", ")};
       `,
     )
     .bind(
@@ -82,7 +76,7 @@ export async function getMenu(
   restaurantId: number,
 ): Promise<{ menu: Menu; validUntil: string } | null> {
   const row = await db
-    .prepare("SELECT mon, tue, wed, thu, fri, valid_until AS validUntil FROM menus WHERE restaurant_id = ?")
+    .prepare(`SELECT ${weekdays.join(", ")}, valid_until AS validUntil FROM menus WHERE restaurant_id = ?`)
     .bind(restaurantId)
     .first<Record<Weekday, DayColumn> & { validUntil: string }>()
   if (!row) return null

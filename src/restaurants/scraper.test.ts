@@ -51,6 +51,17 @@ describe("scraper validity", () => {
     })
   })
 
+  it("omits days whose only dishes are placeholders", () => {
+    const menu = { mon: [{ text: "-" }], thu: [{ text: "–" }, { text: "Lunch" }] }
+    expect(menuForCurrentWeek(menu, "Lunch menu week 32", now)).toEqual(
+      expect.objectContaining({ menu: { thu: [{ text: "Lunch" }] } }),
+    )
+    expect(menuForCurrentWeek({ mon: [{ text: "—" }] }, "Lunch menu week 32", now)).toEqual({
+      status: "unavailable",
+      reason: "no weekday menu parsed",
+    })
+  })
+
   it("recognizes vacation closures", () => {
     expect(pageIndicatesClosure("SEMESTERSTÄNGT v. 28-32, vi öppnar åter 10 augusti")).toBe(true)
   })
