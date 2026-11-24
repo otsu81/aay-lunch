@@ -18,7 +18,8 @@ export const MiaMarias: HtmlRestaurant = {
       const dishes = queryAll(panel, ":scope > div.e-con-full.e-flex.e-con.e-child")
         .map((dish) => text(query(dish, ".elementor-widget-text-editor.elementor-widget__width-initial p")))
         .filter(Boolean)
-      if (dishes.length) menu[weekday] = dishes.join("<br>")
+        .map((dish) => ({ text: dish }))
+      if (dishes.length) menu[weekday] = dishes
     }
 
     return menu

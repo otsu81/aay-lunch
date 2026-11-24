@@ -16,13 +16,13 @@ export const P2: HtmlRestaurant = {
       const day = parseWeekday(text(query(container, "h3.elementor-heading-title")))
       if (!day) continue
 
-      const items = queryAll(container, ".lunchmeny_container").flatMap((item) => {
-        const title = text(query(item, ".lunch_title"))
-        const desc = text(query(item, ".lunch_desc"))
-        return title && desc ? [`<b>${title}</b>: ${desc}`] : []
+      const dishes = queryAll(container, ".lunchmeny_container").flatMap((item) => {
+        const label = text(query(item, ".lunch_title"))
+        const dish = text(query(item, ".lunch_desc"))
+        return label && dish ? [{ label, text: dish }] : []
       })
 
-      if (items.length) menu[day] = items.join("<br>")
+      if (dishes.length) menu[day] = dishes
     }
 
     return menu

@@ -1,4 +1,4 @@
-import { type Weekday, weekdays } from "../weekdays"
+import { type Dish, type Weekday, weekdays } from "../weekdays"
 import { type CustomRestaurant, fetchRestaurant, menuForDate, unavailable } from "./scraper"
 
 interface SpillAcf {
@@ -52,14 +52,15 @@ export const Spill: CustomRestaurant = {
     const primary = mergeParentheticalLines(htmlToLines(dagens_primar))
     const veg = mergeParentheticalLines(htmlToLines(dagens_veg))
 
-    const lines: string[] = []
-    if (primary.length) lines.push(primary.join("<br>"))
-    if (veg.length) lines.push(`Vegetarisk: ${veg.join("<br>")}`)
-
-    if (!lines.length) return unavailable("dish lines are empty")
+    // Later vegetarian lines are notes on the first (e.g. "can be made vegan"), so only it gets the label.
+    const dishes: Dish[] = [
+      ...primary.map((line) => ({ text: line })),
+      ...veg.map((line, i) => (i ? { text: line } : { label: "Vegetarisk", text: line })),
+    ]
+    if (!dishes.length) return unavailable("dish lines are empty")
 
     const day: Weekday | undefined = weekdays[new Date(date).getUTCDay() - 1]
     if (!day) return unavailable("source date is not a weekday")
-    return menuForDate({ [day]: lines.join("<br>") }, date)
+    return menuForDate({ [day]: dishes }, date)
   },
 }

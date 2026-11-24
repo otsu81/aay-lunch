@@ -15,14 +15,14 @@ export const Niagara: HtmlRestaurant = {
       const key = parseWeekday(text(query(panel, "h3.elementor-heading-title")))
       if (!key) continue
 
-      const items = queryAll(panel, ".lunchmeny_container").map((container) => {
-        const title = text(query(container, ".lunch_title"))
-        // The description holds the Swedish text first, then an English translation.
-        const desc = query(container, ".lunch_desc")?.innerHTML.trim().split("<br>")[0] ?? ""
-        return `<b>${title}</b>: ${desc}`
+      const dishes = queryAll(panel, ".lunchmeny_container").map((container) => {
+        const label = text(query(container, ".lunch_title"))
+        // The description holds the Swedish text, then a <br> and an English translation.
+        const dish = text(query(container, ".lunch_desc")?.firstChild)
+        return label ? { label, text: dish } : { text: dish }
       })
 
-      menu[key] = items.join("<br>")
+      if (dishes.length) menu[key] = dishes
     }
 
     return menu

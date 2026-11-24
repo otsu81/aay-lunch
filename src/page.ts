@@ -1,18 +1,21 @@
+import { html, raw } from "hono/html"
 import { formatDate, formatDateTime } from "./dates"
 import type { DayMenu, WeekdayMenuRow } from "./db"
 import type { RestaurantInfo } from "./restaurants/scraper"
-import { type Weekday, weekdays } from "./weekdays"
+import { type Dish, type Weekday, weekdays } from "./weekdays"
+
+// Build markup only with html``, which escapes every interpolated string.
+type Fragment = ReturnType<typeof html>
 
 type Entry = { restaurant: RestaurantInfo; row?: WeekdayMenuRow }
 
-const link = ({ url, name }: RestaurantInfo, title?: string) =>
-  `<a href="${url}" target="_blank" rel="noopener noreferrer"${title ? ` title="${title}"` : ""}>${name}</a>`
+// Safe under raw(): each fragment is already escaped and the separator is a literal.
+const joinFragments = (fragments: Fragment[], separator: string) => raw(fragments.join(separator))
 
-const parseMenuItems = (dish: string) =>
-  dish
-    .split(/<br\s*\/?>/)
-    .map((item) => item.trim())
-    .filter(Boolean)
+const link = ({ url, name }: RestaurantInfo, title?: string) =>
+  html`<a href="${url}" target="_blank" rel="noopener noreferrer"${title ? html` title="${title}"` : ""}>${name}</a>`
+
+const dishItem = ({ label, text }: Dish) => html`<li>${label ? html`<b>${label}</b>: ` : ""}${text}</li>`
 
 function refreshNotice(missing: Entry[], now: Date) {
   const today = formatDate(now)
@@ -23,21 +26,17 @@ function refreshNotice(missing: Entry[], now: Date) {
   const failed = notClosed.filter(isFailed).map(({ restaurant }) => link(restaurant))
   const notFetched = notClosed.filter((e) => !isFailed(e)).map(({ restaurant }) => link(restaurant))
 
-  const lines = [
-    failed.length ? `failed to fetch: ${failed.join(", ")}` : "",
-    notFetched.length ? `not yet fetched for today: ${notFetched.join(", ")}` : "",
-  ].filter(Boolean)
-  return lines.length ? `<p class="refresh-status">${lines.join("<br>")}</p>` : ""
+  const lines: Fragment[] = []
+  if (failed.length) lines.push(html`failed to fetch: ${joinFragments(failed, ", ")}`)
+  if (notFetched.length) lines.push(html`not yet fetched for today: ${joinFragments(notFetched, ", ")}`)
+  return lines.length ? html`<p class="refresh-status">${joinFragments(lines, "<br>")}</p>` : ""
 }
 
 function tableRow(restaurant: RestaurantInfo, menu: DayMenu) {
-  const listItems = parseMenuItems(menu.dish)
-    .map((item) => `<li>${item}</li>`)
-    .join("")
   const freshness = `Menu fetched ${formatDateTime(new Date(menu.fetchedAt))}; valid ${menu.validFrom} through ${menu.validUntil}`
-  return `<tr>
+  return html`<tr>
         <td class="restaurant">${link(restaurant, freshness)}</td>
-        <td><ul>${listItems}</ul></td>
+        <td><ul>${menu.dishes.map(dishItem)}</ul></td>
       </tr>`
 }
 
@@ -52,17 +51,16 @@ export function renderWeekdayMenu(
   const tableRows = entries.flatMap(({ restaurant, row }) => (row?.menu ? [tableRow(restaurant, row.menu)] : []))
   const missing = entries.filter(({ row }) => !row?.menu)
 
-  const weekdayNav = weekdays
-    .map((day) => {
-      const label = day[0].toUpperCase() + day.slice(1)
-      const cls = day === weekday ? "pill active" : "pill"
-      return `<a href="/${day}" class="${cls}">${label}</a>`
-    })
-    .join("")
+  const weekdayNav = weekdays.map((day) => {
+    const label = day[0].toUpperCase() + day.slice(1)
+    const cls = day === weekday ? "pill active" : "pill"
+    return html`<a href="/${day}" class="${cls}">${label}</a>`
+  })
 
-  return page(weekdayNav, tableRows.join("\n"), refreshNotice(missing, now))
+  return page(weekdayNav, tableRows, refreshNotice(missing, now))
 }
 
+// Inserted with raw(): browsers don't decode entities inside <style>, so escaping would break the CSS.
 const styles = `
     :root {
       --bg: #f5f5f7;
@@ -188,14 +186,14 @@ const styles = `
     }
 `
 
-const page = (nav: string, tableRows: string, refreshNotice: string) => `<!DOCTYPE html>
+const page = (nav: Fragment[], tableRows: Fragment[], refreshNotice: Fragment | "") => html`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Mec Lunch</title>
-  <style>${styles}  </style>
+  <style>${raw(styles)}  </style>
 </head>
 <body>
   <header>

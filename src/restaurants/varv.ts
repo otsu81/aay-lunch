@@ -1,4 +1,4 @@
-import type { Menu, Weekday } from "../weekdays"
+import type { Dish, Menu } from "../weekdays"
 import { type HtmlRestaurant, parseWeekday, queryAll, text } from "./scraper"
 
 export const Varv: HtmlRestaurant = {
@@ -13,7 +13,7 @@ export const Varv: HtmlRestaurant = {
     )
     if (!menuContent) return menu
 
-    let currentDay: Weekday | undefined
+    let dishes: Dish[] | undefined
 
     for (const child of queryAll(menuContent, ":scope > *")) {
       const tag = child.tagName?.toLowerCase()
@@ -23,19 +23,19 @@ export const Varv: HtmlRestaurant = {
       if (tag === "h2") {
         const day = parseWeekday(line)
         if (day) {
-          currentDay = day
-          menu[currentDay] = ""
+          dishes = []
+          menu[day] = dishes
           continue
         }
 
-        if (currentDay) break
+        if (dishes) break
         continue
       }
 
-      if (tag !== "p" || !currentDay) continue
+      if (tag !== "p" || !dishes) continue
       if (/^or$/i.test(line) || /^All dishes are available/i.test(line)) continue
 
-      menu[currentDay] = menu[currentDay] ? `${menu[currentDay]}<br>${line}` : line
+      dishes.push({ text: line })
     }
 
     return menu

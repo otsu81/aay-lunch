@@ -1,9 +1,9 @@
 import { getWeekdayDate } from "./dates"
 import type { RefreshStatus } from "./restaurants/scraper"
-import { isWeekday, type Menu, type Weekday } from "./weekdays"
+import { type Dish, isWeekday, type Menu, type Weekday, weekdays } from "./weekdays"
 
 export interface DayMenu {
-  dish: string
+  dishes: Dish[]
   fetchedAt: string
   validFrom: string
   validUntil: string
@@ -14,6 +14,22 @@ export interface WeekdayMenuRow {
   menu: DayMenu | null
   lastAttemptAt: string | null
   lastStatus: RefreshStatus | null
+}
+
+// A day column holds its dishes as JSON, or NULL when the day has none.
+type DayColumn = string | null
+
+function serializeDishes(dishes: Dish[] | undefined): DayColumn {
+  return dishes?.length ? JSON.stringify(dishes) : null
+}
+
+function parseDishes(column: string): Dish[] {
+  return JSON.parse(column)
+}
+
+// Compares stored forms so equality means "storing either writes the same row".
+export function isSameMenu(a: Menu, b: Menu) {
+  return weekdays.every((day) => serializeDishes(a[day]) === serializeDishes(b[day]))
 }
 
 export async function recordAttempt(db: D1Database, restaurantId: number, status: RefreshStatus, attemptedAt: Date) {
@@ -53,11 +69,7 @@ export async function upsertMenu(
     )
     .bind(
       restaurantId,
-      menu.mon || null,
-      menu.tue || null,
-      menu.wed || null,
-      menu.thu || null,
-      menu.fri || null,
+      ...weekdays.map((day) => serializeDishes(menu[day])),
       validFrom,
       validUntil,
       fetchedAt.toISOString(),
@@ -65,11 +77,22 @@ export async function upsertMenu(
     .run()
 }
 
-export async function getMenu(db: D1Database, restaurantId: number) {
-  return db
+export async function getMenu(
+  db: D1Database,
+  restaurantId: number,
+): Promise<{ menu: Menu; validUntil: string } | null> {
+  const row = await db
     .prepare("SELECT mon, tue, wed, thu, fri, valid_until AS validUntil FROM menus WHERE restaurant_id = ?")
     .bind(restaurantId)
-    .first<Menu & { validUntil: string }>()
+    .first<Record<Weekday, DayColumn> & { validUntil: string }>()
+  if (!row) return null
+
+  const menu: Menu = {}
+  for (const day of weekdays) {
+    const column = row[day]
+    if (column) menu[day] = parseDishes(column)
+  }
+  return { menu, validUntil: row.validUntil }
 }
 
 export async function getWeekdayMenus(db: D1Database, weekday: Weekday, now = new Date()): Promise<WeekdayMenuRow[]> {
@@ -81,7 +104,7 @@ export async function getWeekdayMenus(db: D1Database, weekday: Weekday, now = ne
   const { results } = await db
     .prepare(
       `
-      SELECT r.id, NULLIF(m.${weekday}, '') AS dish, m.fetched_at AS fetchedAt,
+      SELECT r.id, m.${weekday} AS dishes, m.fetched_at AS fetchedAt,
         m.valid_from AS validFrom, m.valid_until AS validUntil,
         r.last_attempt_at AS lastAttemptAt, r.last_status AS lastStatus
       FROM restaurants r
@@ -89,11 +112,11 @@ export async function getWeekdayMenus(db: D1Database, weekday: Weekday, now = ne
       `,
     )
     .bind(date, date)
-    .all<Omit<WeekdayMenuRow, "menu"> & Omit<DayMenu, "dish"> & { dish: string | null }>()
+    .all<Omit<WeekdayMenuRow, "menu"> & Omit<DayMenu, "dishes"> & { dishes: DayColumn }>()
 
-  // upsertMenu writes the menu columns together, so a dish implies the rest are set.
-  return results.map(({ dish, fetchedAt, validFrom, validUntil, ...attempt }) => ({
+  // upsertMenu writes the menu columns together, so dishes imply the rest are set.
+  return results.map(({ dishes, fetchedAt, validFrom, validUntil, ...attempt }) => ({
     ...attempt,
-    menu: dish ? { dish, fetchedAt, validFrom, validUntil } : null,
+    menu: dishes ? { dishes: parseDishes(dishes), fetchedAt, validFrom, validUntil } : null,
   }))
 }

@@ -9,12 +9,12 @@ describe("getWeekdayMenus", () => {
     await upsertMenu(
       env.db,
       998,
-      { menu: { mon: "Current lunch" }, validFrom: "2026-08-03", validUntil: "2026-08-07" },
+      { menu: { mon: [{ label: "Green", text: "Current lunch" }] }, validFrom: "2026-08-03", validUntil: "2026-08-07" },
       monday,
     )
 
     const row = async (now: Date) => (await getWeekdayMenus(env.db, "mon", now)).find(({ id }) => id === 998)
-    expect(await row(monday)).toMatchObject({ menu: { dish: "Current lunch" } })
+    expect(await row(monday)).toMatchObject({ menu: { dishes: [{ label: "Green", text: "Current lunch" }] } })
     expect(await row(new Date("2026-08-10T12:00:00.000Z"))).toMatchObject({ menu: null })
   })
 })

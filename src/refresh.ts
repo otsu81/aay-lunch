@@ -1,7 +1,7 @@
-import { deleteMenu, getMenu, recordAttempt, upsertMenu } from "./db"
+import { deleteMenu, getMenu, isSameMenu, recordAttempt, upsertMenu } from "./db"
 import { restaurants } from "./restaurants/all"
 import { type MenuResult, type Restaurant, scrape, unavailable } from "./restaurants/scraper"
-import { type Menu, weekdays } from "./weekdays"
+import type { Menu } from "./weekdays"
 
 export async function refreshMenus(db: D1Database) {
   const results = await Promise.allSettled(restaurants.map((r) => refreshRestaurant(db, r)))
@@ -56,5 +56,5 @@ async function isUnchangedFromPreviousWeek(db: D1Database, restaurantId: number,
   const previous = await getMenu(db, restaurantId)
   if (!previous || previous.validUntil >= validFrom) return false
 
-  return weekdays.every((day) => (previous[day] || "") === (menu[day] || ""))
+  return isSameMenu(previous.menu, menu)
 }

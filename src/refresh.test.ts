@@ -10,9 +10,9 @@ function fixture(id: number, generateMenu: () => Promise<MenuResult>): Restauran
   return { id, name: `Fixture ${id}`, url: "https://example.com", generateMenu }
 }
 
-async function seedMenu(id: number, dish: string) {
+async function seedMenu(id: number, text: string) {
   await recordAttempt(env.db, id, "available", monday)
-  await upsertMenu(env.db, id, { menu: { mon: dish }, validFrom: "2026-08-03", validUntil: "2026-08-07" }, monday)
+  await upsertMenu(env.db, id, { menu: { mon: [{ text }] }, validFrom: "2026-08-03", validUntil: "2026-08-07" }, monday)
 }
 
 async function mondayRow(id: number, now = monday) {
@@ -36,7 +36,10 @@ describe("refreshRestaurant", () => {
     await seedMenu(restaurant.id, "Kept lunch")
 
     await refreshRestaurant(env.db, restaurant, monday)
-    expect(await mondayRow(restaurant.id)).toMatchObject({ menu: { dish: "Kept lunch" }, lastStatus: "unavailable" })
+    expect(await mondayRow(restaurant.id)).toMatchObject({
+      menu: { dishes: [{ text: "Kept lunch" }] },
+      lastStatus: "unavailable",
+    })
   })
 
   it("keeps a still-valid menu and records the failure when a refresh throws", async () => {
@@ -47,7 +50,7 @@ describe("refreshRestaurant", () => {
 
     await expect(refreshRestaurant(env.db, restaurant, monday)).rejects.toThrow("HTTP 503")
     expect(await mondayRow(restaurant.id)).toMatchObject({
-      menu: { dish: "Survives outage" },
+      menu: { dishes: [{ text: "Survives outage" }] },
       lastStatus: "failed",
       lastAttemptAt: monday.toISOString(),
     })
@@ -56,20 +59,23 @@ describe("refreshRestaurant", () => {
   it("creates the restaurant on its first refresh", async () => {
     const restaurant = fixture(994, async () => ({
       status: "available",
-      menu: { mon: "First lunch" },
+      menu: { mon: [{ text: "First lunch" }] },
       validFrom: "2026-08-03",
       validUntil: "2026-08-07",
       periodConfirmed: true,
     }))
 
     await refreshRestaurant(env.db, restaurant, monday)
-    expect(await mondayRow(restaurant.id)).toMatchObject({ menu: { dish: "First lunch" }, lastStatus: "available" })
+    expect(await mondayRow(restaurant.id)).toMatchObject({
+      menu: { dishes: [{ text: "First lunch" }] },
+      lastStatus: "available",
+    })
   })
 
   it("keeps rejecting an unchanged unconfirmed menu across repeated refreshes", async () => {
     const restaurant = fixture(997, async () => ({
       status: "available",
-      menu: { mon: "Possibly stale lunch" },
+      menu: { mon: [{ text: "Possibly stale lunch" }] },
       validFrom: "2026-08-10",
       validUntil: "2026-08-14",
       periodConfirmed: false,

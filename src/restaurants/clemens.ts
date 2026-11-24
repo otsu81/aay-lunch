@@ -15,7 +15,7 @@ export const Clemens: HtmlRestaurant = {
     for (const entry of queryAll(lunch, ":scope > div")) {
       const day = parseWeekday(text(query(entry, ".font-bold")))
       const dish = text(query(entry, ".italic"))
-      if (day && dish) menu[day] = dish
+      if (day && dish) menu[day] = [{ text: dish }]
     }
 
     return menu

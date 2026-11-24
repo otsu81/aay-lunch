@@ -26,7 +26,7 @@ export const CafeLive: HtmlRestaurant = {
 
       const dishEl: HTMLElement | null = current.nextElementSibling
       const dish = dishEl?.tagName?.toLowerCase() === "p" ? text(dishEl) : ""
-      if (dish) menu[dayKey] = dish
+      if (dish) menu[dayKey] = [{ text: dish }]
     }
 
     return menu

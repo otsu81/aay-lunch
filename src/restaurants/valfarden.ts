@@ -1,4 +1,4 @@
-import type { Menu, Weekday } from "../weekdays"
+import type { Dish, Menu, Weekday } from "../weekdays"
 import { type HtmlRestaurant, parseWeekday, query, queryAll } from "./scraper"
 
 export const Valfarden: HtmlRestaurant = {
@@ -12,9 +12,11 @@ export const Valfarden: HtmlRestaurant = {
     if (!section) return menu
 
     let currentDay: Weekday | undefined
-    let currentDishes: string[] = []
+    let currentDishes: Dish[] = []
+    // A day header without dishes means closed that day; leaving the day empty would
+    // make the page list Välfärden as not yet fetched.
     const flush = () => {
-      if (currentDay) menu[currentDay] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
+      if (currentDay) menu[currentDay] = currentDishes.length ? currentDishes : [{ text: "Stängt" }]
     }
 
     for (const p of queryAll(section, "p")) {
@@ -26,7 +28,7 @@ export const Valfarden: HtmlRestaurant = {
         currentDay = day
         currentDishes = []
       } else if (!["", "-", "–", "—"].includes(txt)) {
-        currentDishes.push(txt)
+        currentDishes.push({ text: txt })
       }
     }
     flush()

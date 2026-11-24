@@ -15,9 +15,12 @@ export const Kolgas: HtmlRestaurant = {
       const tbody: HTMLElement | null = header.nextElementSibling
       if (!key || !tbody) continue
 
-      const items = queryAll(tbody, "td.td_title").map(text).filter(Boolean)
+      const dishes = queryAll(tbody, "td.td_title")
+        .map(text)
+        .filter(Boolean)
+        .map((dish) => ({ text: dish }))
 
-      if (items.length) menu[key] = items.join("<br>")
+      if (dishes.length) menu[key] = dishes
     }
 
     return menu

@@ -71,8 +71,10 @@ export function query(root: QueryRoot, selector: string): HTMLElement | null {
   return root.querySelector(selector)
 }
 
+// linkedom's NodeList subclasses Array, so map/filter would keep returning NodeLists and
+// leak them into menus. Copy to a plain array.
 export function queryAll(root: QueryRoot, selector: string): HTMLElement[] {
-  return root.querySelectorAll(selector)
+  return Array.from(root.querySelectorAll(selector))
 }
 
 export function text(node?: { textContent: string | null } | null): string {
@@ -110,8 +112,12 @@ export function pageIndicatesClosure(text: string) {
   return false
 }
 
+function hasDishes(menu: Menu) {
+  return Object.values(menu).some((dishes) => dishes.length > 0)
+}
+
 export function menuForCurrentWeek(menu: Menu, pageText: string, now: Date): MenuResult {
-  if (!Object.values(menu).some((dish) => dish.trim())) return unavailable("no weekday menu parsed")
+  if (!hasDishes(menu)) return unavailable("no weekday menu parsed")
 
   const sourceWeeks = Array.from(
     pageText.matchAll(/\b(?:vecka|v\.)\s*(\d{1,2})\b|\blunch(?: menu|meny)?\s+week\s*(\d{1,2})\b/gi),
@@ -133,6 +139,6 @@ export function menuForCurrentWeek(menu: Menu, pageText: string, now: Date): Men
 }
 
 export function menuForDate(menu: Menu, date: string): MenuResult {
-  if (!Object.values(menu).some((dish) => dish.trim())) return unavailable("no weekday menu parsed")
+  if (!hasDishes(menu)) return unavailable("no weekday menu parsed")
   return { status: "available", menu, validFrom: date, validUntil: date, periodConfirmed: true }
 }

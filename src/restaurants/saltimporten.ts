@@ -18,7 +18,7 @@ export const Saltimporten: HtmlRestaurant = {
       const weekday = query(p, "strong")
       const day = parseWeekday(text(weekday))
       const dish = text(weekday?.nextSibling)
-      if (day && dish) menu[day] = dish
+      if (day && dish) menu[day] = [{ text: dish }]
     }
 
     return menu
