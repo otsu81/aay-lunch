@@ -1,5 +1,5 @@
 import { DOMParser } from "linkedom"
-import { getCurrentISOWeek, getCurrentWeek } from "../dates"
+import { getCurrentISOWeek, getCurrentWeek, isStockholmWeekend } from "../dates"
 import type { Menu, MenuResult } from "./restaurant"
 
 const cacheTtl = 3600
@@ -60,14 +60,13 @@ export function menuForCurrentWeek(menu: Menu, pageText: string, now = new Date(
     return unavailable(`source does not contain a menu for week ${currentWeek}`)
   }
 
+  const periodConfirmed = sourceWeeks.includes(currentWeek)
+  // A weekend page can hold either the past or the coming week's menu; storing it under the
+  // wrong week makes the stale guard reject the real one, or accept a stale one.
+  if (!periodConfirmed && isStockholmWeekend(now)) return unavailable("unconfirmed menu fetched on a weekend")
+
   const validity = getCurrentWeek(now)
-  return {
-    status: "available",
-    menu,
-    validFrom: validity.from,
-    validUntil: validity.until,
-    periodConfirmed: sourceWeeks.includes(currentWeek),
-  }
+  return { status: "available", menu, validFrom: validity.from, validUntil: validity.until, periodConfirmed }
 }
 
 export function menuForDate(menu: Menu, date: string): MenuResult {

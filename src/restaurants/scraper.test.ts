@@ -35,6 +35,22 @@ describe("scraper validity", () => {
     })
   })
 
+  it("rejects an unconfirmed menu fetched on a weekend", () => {
+    const sunday = new Date("2026-08-09T08:30:00.000Z")
+    expect(menuForCurrentWeek({ mon: "Lunch" }, "Dagens lunch", sunday)).toEqual({
+      status: "unavailable",
+      reason: "unconfirmed menu fetched on a weekend",
+    })
+  })
+
+  it("accepts a confirmed menu fetched on a weekend", () => {
+    const sunday = new Date("2026-08-09T08:30:00.000Z")
+    expect(menuForCurrentWeek({ mon: "Lunch" }, "Lunchmeny vecka 32", sunday)).toMatchObject({
+      status: "available",
+      periodConfirmed: true,
+    })
+  })
+
   it("recognizes vacation closures", () => {
     expect(pageIndicatesClosure("SEMESTERSTÄNGT v. 28-32, vi öppnar åter 10 augusti")).toBe(true)
   })
