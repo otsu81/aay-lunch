@@ -1,14 +1,9 @@
 import { formatDate, formatDateTime } from "./dates"
-import type { WeekdayMenuRow } from "./db"
+import type { DayMenu, WeekdayMenuRow } from "./db"
 import type { RestaurantInfo } from "./restaurants/scraper"
 import { type Weekday, weekdays } from "./weekdays"
 
 type Entry = { restaurant: RestaurantInfo; row?: WeekdayMenuRow }
-type ShownRow = WeekdayMenuRow & { dish: string; fetchedAt: string; validFrom: string; validUntil: string }
-type ShownEntry = { restaurant: RestaurantInfo; row: ShownRow }
-
-const isShown = (entry: Entry): entry is ShownEntry =>
-  !!(entry.row?.dish && entry.row.fetchedAt && entry.row.validFrom && entry.row.validUntil)
 
 const link = ({ url, name }: RestaurantInfo, title?: string) =>
   `<a href="${url}" target="_blank" rel="noopener noreferrer"${title ? ` title="${title}"` : ""}>${name}</a>`
@@ -35,11 +30,11 @@ function refreshNotice(missing: Entry[], now: Date) {
   return lines.length ? `<p class="refresh-status">${lines.join("<br>")}</p>` : ""
 }
 
-function tableRow({ restaurant, row }: ShownEntry) {
-  const listItems = parseMenuItems(row.dish)
+function tableRow(restaurant: RestaurantInfo, menu: DayMenu) {
+  const listItems = parseMenuItems(menu.dish)
     .map((item) => `<li>${item}</li>`)
     .join("")
-  const freshness = `Menu fetched ${formatDateTime(new Date(row.fetchedAt))}; valid ${row.validFrom} through ${row.validUntil}`
+  const freshness = `Menu fetched ${formatDateTime(new Date(menu.fetchedAt))}; valid ${menu.validFrom} through ${menu.validUntil}`
   return `<tr>
         <td class="restaurant">${link(restaurant, freshness)}</td>
         <td><ul>${listItems}</ul></td>
@@ -54,8 +49,8 @@ export function renderWeekdayMenu(
 ) {
   const rowsById = new Map(rows.map((row) => [row.id, row]))
   const entries: Entry[] = restaurants.map((restaurant) => ({ restaurant, row: rowsById.get(restaurant.id) }))
-  const shown = entries.filter(isShown)
-  const missing = entries.filter((e) => !isShown(e))
+  const tableRows = entries.flatMap(({ restaurant, row }) => (row?.menu ? [tableRow(restaurant, row.menu)] : []))
+  const missing = entries.filter(({ row }) => !row?.menu)
 
   const weekdayNav = weekdays
     .map((day) => {
@@ -65,7 +60,7 @@ export function renderWeekdayMenu(
     })
     .join("")
 
-  return page(weekdayNav, shown.map(tableRow).join("\n"), refreshNotice(missing, now))
+  return page(weekdayNav, tableRows.join("\n"), refreshNotice(missing, now))
 }
 
 const styles = `

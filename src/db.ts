@@ -1,126 +1,99 @@
 import { getWeekdayDate } from "./dates"
-import { type MenuResult, type RefreshStatus, type Restaurant, scrape } from "./restaurants/scraper"
-import { isWeekday, type Menu, type Weekday, weekdays } from "./weekdays"
+import type { RefreshStatus } from "./restaurants/scraper"
+import { isWeekday, type Menu, type Weekday } from "./weekdays"
+
+export interface DayMenu {
+  dish: string
+  fetchedAt: string
+  validFrom: string
+  validUntil: string
+}
 
 export interface WeekdayMenuRow {
   id: number
-  dish: string | null
-  fetchedAt: string | null
-  validFrom: string | null
-  validUntil: string | null
+  menu: DayMenu | null
   lastAttemptAt: string | null
   lastStatus: RefreshStatus | null
 }
 
-export class Db {
-  constructor(private db: D1Database) {}
+export async function recordAttempt(db: D1Database, restaurantId: number, status: RefreshStatus, attemptedAt: Date) {
+  await db
+    .prepare(
+      "INSERT INTO restaurants (id, last_attempt_at, last_status) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET last_attempt_at=excluded.last_attempt_at, last_status=excluded.last_status",
+    )
+    .bind(restaurantId, attemptedAt.toISOString(), status)
+    .run()
+}
 
-  async refreshMenu(restaurant: Restaurant, now = new Date()): Promise<MenuResult> {
-    await this.db
-      .prepare(
-        "INSERT INTO restaurants(id, name, url) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name=excluded.name, url=excluded.url",
-      )
-      .bind(restaurant.id, restaurant.name, restaurant.url)
-      .run()
+export async function deleteMenu(db: D1Database, restaurantId: number) {
+  await db.prepare("DELETE FROM menus WHERE restaurant_id = ?").bind(restaurantId).run()
+}
 
-    let result: MenuResult
-    try {
-      result = await this.storeMenu(restaurant, now)
-    } catch (error) {
-      await this.recordAttempt(restaurant.id, now, "failed")
-      throw error
-    }
-    await this.recordAttempt(restaurant.id, now, result.status)
-    return result
-  }
+export async function upsertMenu(
+  db: D1Database,
+  restaurantId: number,
+  { menu, validFrom, validUntil }: { menu: Menu; validFrom: string; validUntil: string },
+  fetchedAt: Date,
+) {
+  await db
+    .prepare(
+      `
+      INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri, valid_from, valid_until, fetched_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(restaurant_id) DO UPDATE SET
+        mon=excluded.mon,
+        tue=excluded.tue,
+        wed=excluded.wed,
+        thu=excluded.thu,
+        fri=excluded.fri,
+        valid_from=excluded.valid_from,
+        valid_until=excluded.valid_until,
+        fetched_at=excluded.fetched_at;
+      `,
+    )
+    .bind(
+      restaurantId,
+      menu.mon || null,
+      menu.tue || null,
+      menu.wed || null,
+      menu.thu || null,
+      menu.fri || null,
+      validFrom,
+      validUntil,
+      fetchedAt.toISOString(),
+    )
+    .run()
+}
 
-  private async recordAttempt(restaurantId: number, now: Date, status: RefreshStatus) {
-    await this.db
-      .prepare("UPDATE restaurants SET last_attempt_at = ?, last_status = ? WHERE id = ?")
-      .bind(now.toISOString(), status, restaurantId)
-      .run()
-  }
+export async function getMenu(db: D1Database, restaurantId: number) {
+  return db
+    .prepare("SELECT mon, tue, wed, thu, fri, valid_until AS validUntil FROM menus WHERE restaurant_id = ?")
+    .bind(restaurantId)
+    .first<Menu & { validUntil: string }>()
+}
 
-  private async storeMenu(restaurant: Restaurant, now: Date): Promise<MenuResult> {
-    // Throws and non-closed misses leave the stored menu untouched, so a transient failure
-    // can't blank a still-valid menu. The validity window hides it once its week passes.
-    const result = await scrape(restaurant, now)
+export async function getWeekdayMenus(db: D1Database, weekday: Weekday, now = new Date()): Promise<WeekdayMenuRow[]> {
+  if (!isWeekday(weekday)) throw new Error(`invalid weekday: ${weekday}`)
 
-    if (result.status === "closed") {
-      await this.db.prepare("DELETE FROM menus WHERE restaurant_id = ?").bind(restaurant.id).run()
-      return result
-    }
-    if (result.status !== "available") return result
+  const date = getWeekdayDate(weekday, now)
 
-    const { menu } = result
-    // The stale row stays as the comparison baseline; deleting it would let the same stale
-    // scrape be accepted with fresh validity on the next refresh.
-    if (!result.periodConfirmed && (await this.isUnchangedFromPreviousWeek(restaurant.id, menu, result.validFrom))) {
-      return { status: "unavailable", reason: "unconfirmed menu is unchanged from the previous week" }
-    }
+  // Column identifiers can't be parameterized in SQLite; weekday is validated above
+  const { results } = await db
+    .prepare(
+      `
+      SELECT r.id, NULLIF(m.${weekday}, '') AS dish, m.fetched_at AS fetchedAt,
+        m.valid_from AS validFrom, m.valid_until AS validUntil,
+        r.last_attempt_at AS lastAttemptAt, r.last_status AS lastStatus
+      FROM restaurants r
+      LEFT JOIN menus m ON r.id = m.restaurant_id AND m.valid_from <= ? AND m.valid_until >= ?
+      `,
+    )
+    .bind(date, date)
+    .all<Omit<WeekdayMenuRow, "menu"> & Omit<DayMenu, "dish"> & { dish: string | null }>()
 
-    await this.db
-      .prepare(
-        `
-        INSERT INTO menus (restaurant_id, mon, tue, wed, thu, fri, valid_from, valid_until, fetched_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(restaurant_id) DO UPDATE SET
-          mon=excluded.mon,
-          tue=excluded.tue,
-          wed=excluded.wed,
-          thu=excluded.thu,
-          fri=excluded.fri,
-          valid_from=excluded.valid_from,
-          valid_until=excluded.valid_until,
-          fetched_at=excluded.fetched_at;
-        `,
-      )
-      .bind(
-        restaurant.id,
-        menu.mon || null,
-        menu.tue || null,
-        menu.wed || null,
-        menu.thu || null,
-        menu.fri || null,
-        result.validFrom,
-        result.validUntil,
-        now.toISOString(),
-      )
-      .run()
-
-    console.log(`restaurant "${restaurant.name}" menu refreshed`)
-    return result
-  }
-
-  private async isUnchangedFromPreviousWeek(restaurantId: number, menu: Menu, validFrom: string) {
-    const previous = await this.db
-      .prepare("SELECT mon, tue, wed, thu, fri, valid_until FROM menus WHERE restaurant_id = ?")
-      .bind(restaurantId)
-      .first<Menu & { valid_until: string }>()
-    if (!previous || previous.valid_until >= validFrom) return false
-
-    return weekdays.every((day) => (previous[day] || "") === (menu[day] || ""))
-  }
-
-  async getWeekdayMenus(weekday: Weekday, now = new Date()): Promise<WeekdayMenuRow[]> {
-    if (!isWeekday(weekday)) throw new Error(`invalid weekday: ${weekday}`)
-
-    const date = getWeekdayDate(weekday, now)
-
-    // Column identifiers can't be parameterized in SQLite; weekday is validated above
-    const { results } = await this.db
-      .prepare(
-        `
-        SELECT r.id, NULLIF(m.${weekday}, '') AS dish, m.fetched_at AS fetchedAt,
-          m.valid_from AS validFrom, m.valid_until AS validUntil,
-          r.last_attempt_at AS lastAttemptAt, r.last_status AS lastStatus
-        FROM restaurants r
-        LEFT JOIN menus m ON r.id = m.restaurant_id AND m.valid_from <= ? AND m.valid_until >= ?
-        `,
-      )
-      .bind(date, date)
-      .all<WeekdayMenuRow>()
-
-    return results
-  }
+  // upsertMenu writes the menu columns together, so a dish implies the rest are set.
+  return results.map(({ dish, fetchedAt, validFrom, validUntil, ...attempt }) => ({
+    ...attempt,
+    menu: dish ? { dish, fetchedAt, validFrom, validUntil } : null,
+  }))
 }
