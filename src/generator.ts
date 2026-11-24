@@ -1,4 +1,4 @@
-import { getStockholmDate } from "./dates"
+import { formatDate, formatDateTime } from "./dates"
 import type { Db, WeekdayMenuRow } from "./db"
 import type { Restaurant } from "./restaurants/restaurant"
 import { type Weekday, weekdays } from "./weekdays"
@@ -22,9 +22,9 @@ export class Generator {
   }
 
   private refreshNotice(missing: Entry[], now: Date) {
-    const today = getStockholmDate(now)
+    const today = formatDate(now)
     const isFailed = ({ row }: Entry) =>
-      !!row?.lastAttemptAt && getStockholmDate(new Date(row.lastAttemptAt)) === today && row.lastStatus !== "available"
+      !!row?.lastAttemptAt && formatDate(new Date(row.lastAttemptAt)) === today && row.lastStatus !== "available"
     // Closed is a deliberate absence, not a scraper problem.
     const notClosed = missing.filter(({ row }) => row?.lastStatus !== "closed")
     const failed = notClosed.filter(isFailed).map(link)
@@ -59,11 +59,7 @@ export class Generator {
         const listItems = this.parseMenuItems(row.dish ?? "")
           .map((item) => `<li>${item}</li>`)
           .join("")
-        const fetchedAt = new Intl.DateTimeFormat("sv-SE", {
-          dateStyle: "medium",
-          timeStyle: "short",
-          timeZone: "Europe/Stockholm",
-        }).format(new Date(row.fetchedAt ?? ""))
+        const fetchedAt = formatDateTime(new Date(row.fetchedAt ?? ""))
         const freshness = `Menu fetched ${fetchedAt}; valid ${row.validFrom} through ${row.validUntil}`
         return `<tr>
         <td class="restaurant"><a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" title="${freshness}">${restaurant.restaurantName}</a></td>

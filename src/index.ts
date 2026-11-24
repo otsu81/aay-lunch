@@ -1,16 +1,11 @@
-import { enUS } from "date-fns/locale"
-import { format, toZonedTime } from "date-fns-tz"
 import { type Context, Hono } from "hono"
+import { getWeekday } from "./dates"
 import { Db } from "./db"
 import { Generator } from "./generator"
 import { restaurants } from "./restaurants/all"
 import { isWeekday, type Weekday } from "./weekdays"
 
 const hono = new Hono<{ Bindings: Env }>()
-
-function getWeekday(): string {
-  return format(toZonedTime(new Date(), "Europe/Stockholm"), "EEE", { locale: enUS }).toLowerCase()
-}
 
 async function getWeekdayMenu(weekday: Weekday, c: Context<{ Bindings: Env }>) {
   const gen = new Generator(new Db(c.env.db), restaurants)
@@ -50,9 +45,7 @@ hono.get("/:weekday", async (c) => {
 hono.get("/", async (c) => {
   const weekday = getWeekday()
 
-  if (!isWeekday(weekday)) {
-    return c.text("go home and be a family man, there's no lunch menu on weekends")
-  }
+  if (!weekday) return c.text("go home and be a family man, there's no lunch menu on weekends")
   return getWeekdayMenu(weekday, c)
 })
 

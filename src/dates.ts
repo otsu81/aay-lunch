@@ -1,31 +1,33 @@
-import { addDays, format, getISOWeek, isWeekend, startOfWeek } from "date-fns"
+import { addDays, format, getISODay, getISOWeek, startOfWeek } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 import { type Weekday, weekdays } from "./weekdays"
 
-export function getCurrentWeek(now = new Date()) {
-  const stockholmNow = toZonedTime(now, "Europe/Stockholm")
-  const monday = startOfWeek(stockholmNow, { weekStartsOn: 1 })
+const timeZone = "Europe/Stockholm"
 
-  return {
-    from: format(monday, "yyyy-MM-dd"),
-    until: format(addDays(monday, 4), "yyyy-MM-dd"),
-  }
+const zoned = (date: Date) => toZonedTime(date, timeZone)
+const dateString = (date: Date) => format(date, "yyyy-MM-dd")
+const monday = (now: Date) => startOfWeek(zoned(now), { weekStartsOn: 1 })
+
+export function formatDate(date = new Date()) {
+  return dateString(zoned(date))
 }
 
-export function getStockholmDate(date = new Date()) {
-  return format(toZonedTime(date, "Europe/Stockholm"), "yyyy-MM-dd")
+export function getWeekday(now = new Date()): Weekday | undefined {
+  return weekdays[getISODay(zoned(now)) - 1]
 }
 
-export function isStockholmWeekend(date = new Date()) {
-  return isWeekend(toZonedTime(date, "Europe/Stockholm"))
+export function getWeekdayDate(weekday: Weekday, now = new Date()) {
+  return dateString(addDays(monday(now), weekdays.indexOf(weekday)))
 }
 
-export function getCurrentISOWeek(now = new Date()) {
-  return getISOWeek(toZonedTime(now, "Europe/Stockholm"))
+export function getWeekNumber(now = new Date()) {
+  return getISOWeek(zoned(now))
 }
 
-export function getCurrentWeekdayDate(weekday: Weekday, now = new Date()) {
-  const stockholmNow = toZonedTime(now, "Europe/Stockholm")
-  const monday = startOfWeek(stockholmNow, { weekStartsOn: 1 })
-  return format(addDays(monday, weekdays.indexOf(weekday)), "yyyy-MM-dd")
+export function getWeekRange(now = new Date()) {
+  return { from: getWeekdayDate("mon", now), until: getWeekdayDate("fri", now) }
+}
+
+export function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat("sv-SE", { dateStyle: "medium", timeStyle: "short", timeZone }).format(date)
 }

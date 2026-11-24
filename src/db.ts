@@ -1,4 +1,4 @@
-import { getCurrentWeekdayDate } from "./dates"
+import { getWeekdayDate } from "./dates"
 import type { MenuResult, RefreshStatus, Restaurant } from "./restaurants/restaurant"
 import { isWeekday, type Menu, type Weekday, weekdays } from "./weekdays"
 
@@ -105,7 +105,7 @@ export class Db {
   async getWeekdayMenus(weekday: Weekday, now = new Date()): Promise<WeekdayMenuRow[]> {
     if (!isWeekday(weekday)) throw new Error(`invalid weekday: ${weekday}`)
 
-    const date = getCurrentWeekdayDate(weekday, now)
+    const date = getWeekdayDate(weekday, now)
 
     // Column identifiers can't be parameterized in SQLite; weekday is validated above
     const { results } = await this.db
