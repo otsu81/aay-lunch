@@ -1,6 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 const clean = (el: HTMLElement | null) => el?.textContent?.replace(/\s+/g, " ").trim()
 
@@ -18,10 +19,10 @@ export class P2 implements Restaurant {
       .filter((c): c is HTMLElement => !!c)
     if (!dayContainers.length) return unavailable("lunch menu containers not found")
 
-    const menu: Record<string, string> = {}
+    const menu: Menu = {}
 
     for (const container of dayContainers) {
-      const day = swedishWeekday(container.querySelector("h3.elementor-heading-title")?.textContent)
+      const day = parseWeekday(container.querySelector("h3.elementor-heading-title")?.textContent)
       if (!day) continue
 
       const items = (Array.from(container.querySelectorAll(".lunchmeny_container")) as HTMLElement[]).flatMap(

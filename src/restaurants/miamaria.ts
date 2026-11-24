@@ -1,14 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import { type Menu, type Weekday, weekdays } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
 import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
-
-const weekdayMapping: Record<string, string> = {
-  "1": "mon",
-  "2": "tue",
-  "3": "wed",
-  "4": "thu",
-  "5": "fri",
-}
 
 export class MiaMarias implements Restaurant {
   public id = 2
@@ -25,10 +18,10 @@ export class MiaMarias implements Restaurant {
       tabsContent.querySelectorAll(':scope > div[id^="e-n-tab-content-"][role="tabpanel"]'),
     ) as HTMLElement[]
 
-    const menu: Record<string, string> = {}
+    const menu: Menu = {}
 
     for (const panel of dayPanels) {
-      const weekday = weekdayMapping[panel.dataset.tabIndex]
+      const weekday: Weekday | undefined = weekdays[Number(panel.dataset.tabIndex) - 1]
       if (!weekday) continue
 
       const dishes = (

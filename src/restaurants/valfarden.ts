@@ -1,6 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu, Weekday } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 export class Valfarden implements Restaurant {
   public id = 6
@@ -14,8 +15,8 @@ export class Valfarden implements Restaurant {
     const section = doc.querySelector("article section:nth-of-type(2)")
     if (!section) return unavailable("lunch section not found")
 
-    const menu: Record<string, string> = {}
-    let currentDay: string | undefined
+    const menu: Menu = {}
+    let currentDay: Weekday | undefined
     let currentDishes: string[] = []
     const flush = () => {
       if (currentDay) menu[currentDay] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
@@ -23,10 +24,10 @@ export class Valfarden implements Restaurant {
 
     for (const p of section.querySelectorAll("p") as HTMLElement[]) {
       const txt = p.textContent?.normalize("NFC").trim() || ""
-      const dayHeader = txt.match(/^(Måndag|Tisdag|Onsdag|Torsdag|Fredag)/i)
-      if (dayHeader) {
+      const day = parseWeekday(txt.split(/\s+/)[0])
+      if (day) {
         flush()
-        currentDay = swedishWeekday(dayHeader[1])
+        currentDay = day
         currentDishes = []
       } else if (!["", "-", "–", "—"].includes(txt)) {
         currentDishes.push(txt)

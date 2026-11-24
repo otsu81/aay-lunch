@@ -4,8 +4,7 @@ import { type Context, Hono } from "hono"
 import { Db } from "./db"
 import { Generator } from "./generator"
 import { restaurants } from "./restaurants/all"
-
-const weekdays = new Set(["mon", "tue", "wed", "thu", "fri"])
+import { isWeekday, type Weekday } from "./weekdays"
 
 const hono = new Hono<{ Bindings: Env }>()
 
@@ -13,7 +12,7 @@ function getWeekday(): string {
   return format(toZonedTime(new Date(), "Europe/Stockholm"), "EEE", { locale: enUS }).toLowerCase()
 }
 
-async function getWeekdayMenu(weekday: string, c: Context<{ Bindings: Env }>) {
+async function getWeekdayMenu(weekday: Weekday, c: Context<{ Bindings: Env }>) {
   const gen = new Generator(new Db(c.env.db), restaurants)
   return c.html(await gen.generateWeekdayMenu(weekday))
 }
@@ -45,13 +44,13 @@ hono.get("/refresh", async (c) => {
 
 hono.get("/:weekday", async (c) => {
   const weekday = c.req.param("weekday")
-  return weekdays.has(weekday) ? getWeekdayMenu(weekday, c) : c.notFound()
+  return isWeekday(weekday) ? getWeekdayMenu(weekday, c) : c.notFound()
 })
 
 hono.get("/", async (c) => {
   const weekday = getWeekday()
 
-  if (weekday === "sat" || weekday === "sun") {
+  if (!isWeekday(weekday)) {
     return c.text("go home and be a family man, there's no lunch menu on weekends")
   }
   return getWeekdayMenu(weekday, c)

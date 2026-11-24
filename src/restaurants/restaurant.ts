@@ -1,4 +1,4 @@
-export type Menu = Record<string, string>
+import type { Menu } from "../weekdays"
 
 export type MenuResult =
   | {

@@ -1,6 +1,7 @@
 import { DOMParser } from "linkedom"
 import { getCurrentISOWeek, getCurrentWeek, isStockholmWeekend } from "../dates"
-import type { Menu, MenuResult } from "./restaurant"
+import type { Menu, Weekday } from "../weekdays"
+import type { MenuResult } from "./restaurant"
 
 const cacheTtl = 3600
 
@@ -16,17 +17,22 @@ export async function fetchDocument(url: string, init?: RequestInit) {
   return { doc, pageText: doc.documentElement?.textContent || "" }
 }
 
-const swedishWeekdays: Record<string, string> = {
+const weekdayNames: Record<string, Weekday> = {
   måndag: "mon",
   tisdag: "tue",
   onsdag: "wed",
   torsdag: "thu",
   fredag: "fri",
+  monday: "mon",
+  tuesday: "tue",
+  wednesday: "wed",
+  thursday: "thu",
+  friday: "fri",
 }
 
 // Some sites write "å" decomposed (a + U+030A), which wouldn't match the keys above.
-export function swedishWeekday(text?: string | null) {
-  return text ? swedishWeekdays[text.normalize("NFC").trim().toLowerCase()] : undefined
+export function parseWeekday(text?: string | null): Weekday | undefined {
+  return text ? weekdayNames[text.normalize("NFC").trim().toLowerCase()] : undefined
 }
 
 export function unavailable(reason: string): MenuResult {

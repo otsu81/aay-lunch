@@ -1,6 +1,7 @@
 import { getStockholmDate } from "./dates"
 import type { Db, WeekdayMenuRow } from "./db"
 import type { Restaurant } from "./restaurants/restaurant"
+import { type Weekday, weekdays } from "./weekdays"
 
 type Entry = { restaurant: Restaurant; row?: WeekdayMenuRow }
 
@@ -36,7 +37,7 @@ export class Generator {
     return lines.length ? `<p class="refresh-status">${lines.join("<br>")}</p>` : ""
   }
 
-  async generateWeekdayMenu(weekday: string, now = new Date()) {
+  async generateWeekdayMenu(weekday: Weekday, now = new Date()) {
     const rows = new Map((await this.db.getWeekdayMenus(weekday, now)).map((row) => [row.id, row]))
     const entries = this.restaurants.map((restaurant) => ({ restaurant, row: rows.get(restaurant.id) }))
     const shown = entries.filter((e): e is Required<Entry> => !!e.row?.dish)
@@ -45,19 +46,11 @@ export class Generator {
       now,
     )
 
-    const days = [
-      { label: "Mon", path: "/mon" },
-      { label: "Tue", path: "/tue" },
-      { label: "Wed", path: "/wed" },
-      { label: "Thu", path: "/thu" },
-      { label: "Fri", path: "/fri" },
-    ]
-
-    const weekdayNav = days
-      .map(({ label, path }) => {
-        const isActive = label.toLowerCase() === weekday.toLowerCase()
-        const cls = isActive ? "pill active" : "pill"
-        return `<a href="${path}" class="${cls}">${label}</a>`
+    const weekdayNav = weekdays
+      .map((day) => {
+        const label = day[0].toUpperCase() + day.slice(1)
+        const cls = day === weekday ? "pill active" : "pill"
+        return `<a href="/${day}" class="${cls}">${label}</a>`
       })
       .join("")
 

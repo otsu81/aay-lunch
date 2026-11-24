@@ -1,6 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 export class CafeLive implements Restaurant {
   public id = 7
@@ -15,7 +16,7 @@ export class CafeLive implements Restaurant {
     const heading = headings.find((h) => /\bmeny\b/i.test(h.textContent || ""))
     if (!heading) return unavailable("lunch heading not found")
 
-    const menu: Record<string, string> = {}
+    const menu: Menu = {}
 
     for (
       let current = heading.nextElementSibling as HTMLElement | null;
@@ -26,7 +27,7 @@ export class CafeLive implements Restaurant {
 
       // Day labels are sometimes split across several <strong> tags (e.g. an empty &nbsp;
       // one first), so read the whole paragraph.
-      const dayKey = swedishWeekday(current.textContent)
+      const dayKey = parseWeekday(current.textContent)
       if (!dayKey) continue
 
       const dishEl = current.nextElementSibling as HTMLElement | null

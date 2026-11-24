@@ -1,6 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 export class Saltimporten implements Restaurant {
   public id = 8
@@ -16,11 +17,11 @@ export class Saltimporten implements Restaurant {
     )
     if (!container) return unavailable("lunch menu container not found")
 
-    const menu: Record<string, string> = {}
+    const menu: Menu = {}
 
     for (const p of container.querySelectorAll("p") as HTMLElement[]) {
       const weekday = p.querySelector("strong")
-      const day = swedishWeekday(weekday?.textContent)
+      const day = parseWeekday(weekday?.textContent)
       const dish = weekday?.nextSibling?.textContent
       if (day && dish) menu[day] = dish
     }

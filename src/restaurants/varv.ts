@@ -1,14 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu, Weekday } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
-
-const weekdayMapping: Record<string, string> = {
-  monday: "mon",
-  tuesday: "tue",
-  wednesday: "wed",
-  thursday: "thu",
-  friday: "fri",
-}
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 function cleanText(text?: string) {
   return text?.replace(/\s+/g, " ").trim() ?? ""
@@ -32,14 +25,12 @@ export class Varv implements Restaurant {
     if (pageIndicatesClosure(pageText)) return closed()
 
     const menuContent = (Array.from(doc.querySelectorAll(".sqs-html-content")) as HTMLElement[]).find((content) =>
-      Array.from(content.querySelectorAll("h2")).some(
-        (heading) => weekdayMapping[cleanText(heading.textContent).toLowerCase()],
-      ),
+      Array.from(content.querySelectorAll("h2")).some((heading) => parseWeekday(cleanText(heading.textContent))),
     )
     if (!menuContent) return unavailable("lunch menu content not found")
 
-    const menu: Record<string, string> = {}
-    let currentDay: string | undefined
+    const menu: Menu = {}
+    let currentDay: Weekday | undefined
 
     for (const child of Array.from(menuContent.children) as HTMLElement[]) {
       const tag = child.tagName?.toLowerCase()
@@ -47,7 +38,7 @@ export class Varv implements Restaurant {
       if (!text) continue
 
       if (tag === "h2") {
-        const day = weekdayMapping[text.toLowerCase()]
+        const day = parseWeekday(text)
         if (day) {
           currentDay = day
           menu[currentDay] = ""

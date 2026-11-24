@@ -1,5 +1,6 @@
 import { getCurrentWeekdayDate } from "./dates"
-import type { Menu, MenuResult, RefreshStatus, Restaurant } from "./restaurants/restaurant"
+import type { MenuResult, RefreshStatus, Restaurant } from "./restaurants/restaurant"
+import { isWeekday, type Menu, type Weekday, weekdays } from "./weekdays"
 
 export interface WeekdayMenuRow {
   id: number
@@ -10,8 +11,6 @@ export interface WeekdayMenuRow {
   lastAttemptAt: string | null
   lastStatus: RefreshStatus | null
 }
-
-const weekdays = new Set(["mon", "tue", "wed", "thu", "fri"])
 
 export class Db {
   constructor(private db: D1Database) {}
@@ -100,11 +99,11 @@ export class Db {
       .first<Menu & { valid_until: string }>()
     if (!previous || previous.valid_until >= validFrom) return false
 
-    return [...weekdays].every((day) => (previous[day] || "") === (menu[day] || ""))
+    return weekdays.every((day) => (previous[day] || "") === (menu[day] || ""))
   }
 
-  async getWeekdayMenus(weekday: string, now = new Date()): Promise<WeekdayMenuRow[]> {
-    if (!weekdays.has(weekday)) throw new Error(`invalid weekday: ${weekday}`)
+  async getWeekdayMenus(weekday: Weekday, now = new Date()): Promise<WeekdayMenuRow[]> {
+    if (!isWeekday(weekday)) throw new Error(`invalid weekday: ${weekday}`)
 
     const date = getCurrentWeekdayDate(weekday, now)
 

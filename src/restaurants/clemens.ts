@@ -1,6 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 export class Clemens implements Restaurant {
   public id = 4
@@ -17,10 +18,10 @@ export class Clemens implements Restaurant {
     const lunch = heading?.closest("fieldset")
     if (!lunch) return unavailable("weekly lunch menu not found")
 
-    const menu: Record<string, string> = {}
+    const menu: Menu = {}
 
     for (const entry of lunch.querySelectorAll(":scope > div") as HTMLElement[]) {
-      const day = swedishWeekday(entry.querySelector(".font-bold")?.textContent)
+      const day = parseWeekday(entry.querySelector(".font-bold")?.textContent)
       const dish = entry.querySelector(".italic")?.textContent?.replace(/\s+/g, " ").trim()
       if (day && dish) menu[day] = dish
     }

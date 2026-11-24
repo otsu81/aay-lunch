@@ -1,6 +1,7 @@
 import type { HTMLElement } from "linkedom"
+import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, swedishWeekday, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
 
 export class Niagara implements Restaurant {
   public id = 5
@@ -14,10 +15,10 @@ export class Niagara implements Restaurant {
     const tabs = doc.querySelector(".e-n-tabs")
     if (!tabs) return unavailable("lunch tabs not found")
 
-    const menu: Record<string, string> = {}
+    const menu: Menu = {}
 
     for (const panel of tabs.querySelectorAll('[role="tabpanel"]') as HTMLElement[]) {
-      const key = swedishWeekday(panel.querySelector("h3.elementor-heading-title")?.textContent)
+      const key = parseWeekday(panel.querySelector("h3.elementor-heading-title")?.textContent)
       if (!key) continue
 
       const items = (Array.from(panel.querySelectorAll(".lunchmeny_container")) as HTMLElement[]).map((container) => {

@@ -1,3 +1,4 @@
+import { type Weekday, weekdays } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
 import { fetchRestaurant, menuForDate, unavailable } from "./scraper"
 
@@ -9,14 +10,6 @@ interface SpillAcf {
 
 interface SpillPage {
   acf: SpillAcf
-}
-
-const weekdayMapping: Record<number, string> = {
-  1: "mon",
-  2: "tue",
-  3: "wed",
-  4: "thu",
-  5: "fri",
 }
 
 function htmlToLines(html?: string) {
@@ -66,7 +59,7 @@ export class Spill implements Restaurant {
 
     if (!lines.length) return unavailable("dish lines are empty")
 
-    const day = weekdayMapping[new Date(date).getUTCDay()]
+    const day: Weekday | undefined = weekdays[new Date(date).getUTCDay() - 1]
     if (!day) return unavailable("source date is not a weekday")
     return menuForDate({ [day]: lines.join("<br>") }, date)
   }
