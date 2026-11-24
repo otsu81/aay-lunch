@@ -1,4 +1,4 @@
-import type { Menu } from "../weekdays"
+import type { Menu } from "../menu"
 import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
 
 export const Saltimporten: HtmlRestaurant = {
@@ -15,9 +15,9 @@ export const Saltimporten: HtmlRestaurant = {
     if (!container) return menu
 
     for (const p of queryAll(container, "p")) {
-      const weekday = query(p, "strong")
-      const day = parseWeekday(text(weekday))
-      const dish = text(weekday?.nextSibling)
+      const label = query(p, "strong")
+      const day = parseWeekday(text(label))
+      const dish = text(label?.nextSibling)
       if (day && dish) menu[day] = [{ text: dish }]
     }
 

@@ -1,16 +1,16 @@
 import { html, raw } from "hono/html"
 import { formatDate, formatDateTime } from "./dates"
 import type { DayMenu, WeekdayMenuRow } from "./db"
-import type { RestaurantInfo } from "./restaurants/scraper"
-import { type Dish, type Weekday, weekdays } from "./weekdays"
+import { type Dish, type RestaurantInfo, type Weekday, weekdays } from "./menu"
 
 // Build markup only with html``, which escapes every interpolated string.
 type Fragment = ReturnType<typeof html>
 
 type Entry = { restaurant: RestaurantInfo; row?: WeekdayMenuRow }
 
-// Safe under raw(): each fragment is already escaped and the separator is a literal.
-const joinFragments = (fragments: Fragment[], separator: string) => raw(fragments.join(separator))
+// Interleaved, not string-joined: a Fragment can be a Promise, which join() would print as "[object Promise]".
+const joinFragments = (fragments: Fragment[], separator: string) =>
+  fragments.flatMap((fragment, i) => (i ? [raw(separator), fragment] : [fragment]))
 
 const link = ({ url, name }: RestaurantInfo, title?: string) =>
   html`<a href="${url}" target="_blank" rel="noopener noreferrer"${title ? html` title="${title}"` : ""}>${name}</a>`
@@ -40,12 +40,7 @@ function tableRow(restaurant: RestaurantInfo, menu: DayMenu) {
       </tr>`
 }
 
-export function renderWeekdayMenu(
-  rows: WeekdayMenuRow[],
-  restaurants: RestaurantInfo[],
-  weekday: Weekday,
-  now = new Date(),
-) {
+export function renderWeekdayMenu(rows: WeekdayMenuRow[], restaurants: RestaurantInfo[], weekday: Weekday, now: Date) {
   const rowsById = new Map(rows.map((row) => [row.id, row]))
   const entries: Entry[] = restaurants.map((restaurant) => ({ restaurant, row: rowsById.get(restaurant.id) }))
   const tableRows = entries.flatMap(({ restaurant, row }) => (row?.menu ? [tableRow(restaurant, row.menu)] : []))

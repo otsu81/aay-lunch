@@ -1,4 +1,4 @@
-import { type Menu, type Weekday, weekdays } from "../weekdays"
+import { type Menu, nthWeekday } from "../menu"
 import { type HtmlRestaurant, query, queryAll, text } from "./scraper"
 
 export const MiaMarias: HtmlRestaurant = {
@@ -12,14 +12,14 @@ export const MiaMarias: HtmlRestaurant = {
     if (!tabsContent) return menu
 
     for (const panel of queryAll(tabsContent, ':scope > div[id^="e-n-tab-content-"][role="tabpanel"]')) {
-      const weekday: Weekday | undefined = weekdays[Number(panel.dataset.tabIndex) - 1]
-      if (!weekday) continue
+      const day = nthWeekday(Number(panel.dataset.tabIndex))
+      if (!day) continue
 
       const dishes = queryAll(panel, ":scope > div.e-con-full.e-flex.e-con.e-child")
         .map((dish) => text(query(dish, ".elementor-widget-text-editor.elementor-widget__width-initial p")))
         .filter(Boolean)
         .map((dish) => ({ text: dish }))
-      if (dishes.length) menu[weekday] = dishes
+      if (dishes.length) menu[day] = dishes
     }
 
     return menu

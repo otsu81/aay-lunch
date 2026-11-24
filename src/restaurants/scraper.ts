@@ -1,27 +1,6 @@
 import { DOMParser, type HTMLElement } from "linkedom"
 import { getWeekday, getWeekNumber, getWeekRange } from "../dates"
-import { type Menu, type Weekday, weekdays } from "../weekdays"
-
-export type MenuResult =
-  | {
-      status: "available"
-      menu: Menu
-      validFrom: string
-      validUntil: string
-      periodConfirmed: boolean
-    }
-  | {
-      status: "closed" | "unavailable"
-      reason: string
-    }
-
-export type RefreshStatus = MenuResult["status"] | "failed"
-
-export interface RestaurantInfo {
-  id: number
-  name: string
-  url: string
-}
+import { type Menu, type MenuResult, type RestaurantInfo, type Weekday, weekdays } from "../menu"
 
 export interface HtmlRestaurant extends RestaurantInfo {
   parse(doc: QueryRoot): Menu
@@ -39,10 +18,15 @@ export async function scrape(restaurant: Restaurant, now: Date): Promise<MenuRes
   if ("generateMenu" in restaurant) return await restaurant.generateMenu(now)
 
   const response = await fetchRestaurant(restaurant.url)
-  const doc = new DOMParser().parseFromString(await response.text(), "text/html")
+  const doc = parseHtml(await response.text())
   const pageText = text(doc.documentElement)
   if (pageIndicatesClosure(pageText)) return { status: "closed", reason: "restaurant is closed" }
   return menuForCurrentWeek(restaurant.parse(doc), pageText, now)
+}
+
+// linkedom builds no <html>/<body> around a fragment, so wrap fragments in them before parsing.
+export function parseHtml(source: string) {
+  return new DOMParser().parseFromString(source, "text/html")
 }
 
 const cacheTtl = 3600
@@ -80,7 +64,7 @@ export function queryAll(root: QueryRoot, selector: string): HTMLElement[] {
 const ELEMENT_NODE = 1
 const TEXT_NODE = 3
 
-// Structural, so text nodes (firstChild, nextSibling) work as well as elements.
+// Structural, so text nodes (e.g. nextSibling) work as well as elements.
 interface TextSource {
   nodeType: number
   nodeName: string
@@ -89,14 +73,22 @@ interface TextSource {
 }
 
 export function text(node?: TextSource | null): string {
-  return node ? renderedText(node).replace(/\s+/g, " ").trim() : ""
+  return node ? collapseWhitespace(renderedText(node)) : ""
 }
 
-// textContent drops <br>, gluing the words around it ("och<br>basilika").
+// For sources that put several dishes in one element, separated by <br>.
+export function lines(node: TextSource): string[] {
+  return renderedText(node).split("\n").map(collapseWhitespace).filter(Boolean)
+}
+
+const collapseWhitespace = (value: string) => value.replace(/\s+/g, " ").trim()
+
+// textContent drops <br>, gluing the words around it ("och<br>basilika"). Source newlines
+// are collapsed first so that "\n" marks only a <br>.
 function renderedText(node: TextSource): string {
-  if (node.nodeType === TEXT_NODE) return node.textContent ?? ""
+  if (node.nodeType === TEXT_NODE) return (node.textContent ?? "").replace(/\s+/g, " ")
   if (node.nodeType !== ELEMENT_NODE) return ""
-  if (node.nodeName === "BR") return " "
+  if (node.nodeName === "BR") return "\n"
   return Array.from(node.childNodes, renderedText).join("")
 }
 
@@ -114,18 +106,18 @@ const weekdayNames: Record<string, Weekday> = {
 }
 
 // Some sites write "å" decomposed (a + U+030A), which wouldn't match the keys above.
-export function parseWeekday(text?: string | null): Weekday | undefined {
-  return text ? weekdayNames[text.normalize("NFC").trim().toLowerCase()] : undefined
+export function parseWeekday(label?: string | null): Weekday | undefined {
+  return label ? weekdayNames[label.normalize("NFC").trim().toLowerCase()] : undefined
 }
 
 export function unavailable(reason: string): MenuResult {
   return { status: "unavailable", reason }
 }
 
-export function pageIndicatesClosure(text: string) {
+export function pageIndicatesClosure(pageText: string) {
   const closure = /semesterstängt|semester stängt|sommarstängt|stängt\s+v\.?\s*\d|semester.{0,250}öppnar åter/gis
-  for (const match of text.matchAll(closure)) {
-    const preceding = text.slice(Math.max(0, match.index - 40), match.index)
+  for (const match of pageText.matchAll(closure)) {
+    const preceding = pageText.slice(Math.max(0, match.index - 40), match.index)
     if (!/\b(inte|ej|aldrig|utan)\b/i.test(preceding)) return true
   }
   return false

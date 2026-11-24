@@ -1,8 +1,9 @@
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 import { getWeekdayMenus, recordAttempt, upsertMenu } from "./db"
+import type { MenuResult } from "./menu"
 import { refreshRestaurant } from "./refresh"
-import type { MenuResult, Restaurant } from "./restaurants/scraper"
+import type { Restaurant } from "./restaurants/scraper"
 
 const monday = new Date("2026-08-03T08:30:00.000Z")
 

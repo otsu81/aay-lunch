@@ -1,6 +1,5 @@
 import { getWeekdayDate } from "./dates"
-import type { RefreshStatus } from "./restaurants/scraper"
-import { type Dish, isWeekday, type Menu, type Weekday, weekdays } from "./weekdays"
+import { type Dish, isWeekday, type Menu, type RefreshStatus, type Weekday, weekdays } from "./menu"
 
 export interface DayMenu {
   dishes: Dish[]
@@ -89,7 +88,7 @@ export async function getMenu(
   return { menu, validUntil: row.validUntil }
 }
 
-export async function getWeekdayMenus(db: D1Database, weekday: Weekday, now = new Date()): Promise<WeekdayMenuRow[]> {
+export async function getWeekdayMenus(db: D1Database, weekday: Weekday, now: Date): Promise<WeekdayMenuRow[]> {
   if (!isWeekday(weekday)) throw new Error(`invalid weekday: ${weekday}`)
 
   const date = getWeekdayDate(weekday, now)

@@ -1,4 +1,4 @@
-import type { Menu } from "../weekdays"
+import type { Menu } from "../menu"
 import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
 
 export const P2: HtmlRestaurant = {

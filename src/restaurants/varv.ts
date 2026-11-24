@@ -1,4 +1,4 @@
-import type { Dish, Menu } from "../weekdays"
+import type { Dish, Menu } from "../menu"
 import { type HtmlRestaurant, parseWeekday, queryAll, text } from "./scraper"
 
 export const Varv: HtmlRestaurant = {
@@ -16,7 +16,7 @@ export const Varv: HtmlRestaurant = {
     let dishes: Dish[] | undefined
 
     for (const child of queryAll(menuContent, ":scope > *")) {
-      const tag = child.tagName?.toLowerCase()
+      const tag = child.tagName.toLowerCase()
       const line = text(child)
       if (!line) continue
 

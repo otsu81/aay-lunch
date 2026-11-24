@@ -1,5 +1,5 @@
-import { type Dish, type Weekday, weekdays } from "../weekdays"
-import { type CustomRestaurant, fetchRestaurant, menuForDate, unavailable } from "./scraper"
+import { type Dish, nthWeekday } from "../menu"
+import { type CustomRestaurant, fetchRestaurant, lines, menuForDate, parseHtml, unavailable } from "./scraper"
 
 interface SpillAcf {
   datum?: string
@@ -11,21 +11,12 @@ interface SpillPage {
   acf: SpillAcf
 }
 
-function htmlToLines(html?: string) {
-  if (!html) return []
-  const text = html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\r/g, "")
-
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line && !/^välkommen\W*$/i.test(line))
+function fieldLines(field = "") {
+  return lines(parseHtml(`<html><body>${field}</body></html>`).body).filter((line) => !/^välkommen\W*$/i.test(line))
 }
 
-function mergeParentheticalLines(lines: string[]) {
-  return lines.reduce<string[]>((acc, line) => {
+function mergeParentheticalLines(dishLines: string[]) {
+  return dishLines.reduce<string[]>((acc, line) => {
     if (/^\(.*\)$/.test(line) && acc.length > 0) {
       acc[acc.length - 1] = `${acc[acc.length - 1]} ${line}`
       return acc
@@ -49,8 +40,8 @@ export const Spill: CustomRestaurant = {
     if (!datum) return unavailable("source date is missing")
     const date = datum.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")
 
-    const primary = mergeParentheticalLines(htmlToLines(dagens_primar))
-    const veg = mergeParentheticalLines(htmlToLines(dagens_veg))
+    const primary = mergeParentheticalLines(fieldLines(dagens_primar))
+    const veg = mergeParentheticalLines(fieldLines(dagens_veg))
 
     // Later vegetarian lines are notes on the first (e.g. "can be made vegan"), so only it gets the label.
     const dishes: Dish[] = [
@@ -59,7 +50,8 @@ export const Spill: CustomRestaurant = {
     ]
     if (!dishes.length) return unavailable("dish lines are empty")
 
-    const day: Weekday | undefined = weekdays[new Date(date).getUTCDay() - 1]
+    // getUTCDay counts Monday as 1 like ISO; its Sunday 0 is just as much not a weekday.
+    const day = nthWeekday(new Date(date).getUTCDay())
     if (!day) return unavailable("source date is not a weekday")
     return menuForDate({ [day]: dishes }, date)
   },

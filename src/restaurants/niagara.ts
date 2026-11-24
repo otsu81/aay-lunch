@@ -1,5 +1,5 @@
-import type { Menu } from "../weekdays"
-import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
+import type { Menu } from "../menu"
+import { type HtmlRestaurant, lines, parseWeekday, query, queryAll, text } from "./scraper"
 
 export const Niagara: HtmlRestaurant = {
   id: 5,
@@ -12,17 +12,18 @@ export const Niagara: HtmlRestaurant = {
     if (!tabs) return menu
 
     for (const panel of queryAll(tabs, '[role="tabpanel"]')) {
-      const key = parseWeekday(text(query(panel, "h3.elementor-heading-title")))
-      if (!key) continue
+      const day = parseWeekday(text(query(panel, "h3.elementor-heading-title")))
+      if (!day) continue
 
       const dishes = queryAll(panel, ".lunchmeny_container").map((container) => {
         const label = text(query(container, ".lunch_title"))
         // The description holds the Swedish text, then a <br> and an English translation.
-        const dish = text(query(container, ".lunch_desc")?.firstChild)
+        const description = query(container, ".lunch_desc")
+        const dish = description ? (lines(description)[0] ?? "") : ""
         return label ? { label, text: dish } : { text: dish }
       })
 
-      if (dishes.length) menu[key] = dishes
+      if (dishes.length) menu[day] = dishes
     }
 
     return menu

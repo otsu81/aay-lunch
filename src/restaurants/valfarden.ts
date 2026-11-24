@@ -1,4 +1,4 @@
-import type { Dish, Menu, Weekday } from "../weekdays"
+import type { Dish, Menu, Weekday } from "../menu"
 import { type HtmlRestaurant, isPlaceholder, parseWeekday, query, queryAll, text } from "./scraper"
 
 export const Valfarden: HtmlRestaurant = {

@@ -1,28 +1,32 @@
 import { deleteMenu, getMenu, isSameMenu, recordAttempt, upsertMenu } from "./db"
+import type { Menu, MenuResult } from "./menu"
 import { restaurants } from "./restaurants/all"
-import { type MenuResult, type Restaurant, scrape, unavailable } from "./restaurants/scraper"
-import type { Menu } from "./weekdays"
+import { type Restaurant, scrape, unavailable } from "./restaurants/scraper"
 
-export async function refreshMenus(db: D1Database) {
-  const results = await Promise.allSettled(restaurants.map((r) => refreshRestaurant(db, r)))
+export async function refreshMenus(db: D1Database, now: Date) {
+  const results = await Promise.allSettled(restaurants.map((r) => refreshRestaurant(db, r, now)))
 
   const succeeded: string[] = []
-  const unavailable: { restaurant: string; status: Exclude<MenuResult["status"], "available">; reason: string }[] = []
+  const misses: { restaurant: string; status: Exclude<MenuResult["status"], "available">; reason: string }[] = []
   const failed: string[] = []
   results.forEach((result, i) => {
     const name = restaurants[i].name
-    if (result.status === "rejected") failed.push(name)
-    else if (result.value.status === "available") succeeded.push(name)
-    else unavailable.push({ restaurant: name, status: result.value.status, reason: result.value.reason })
+    if (result.status === "rejected") {
+      failed.push(name)
+      console.error(`${name} failed to refresh:`, result.reason)
+    } else if (result.value.status === "available") {
+      succeeded.push(name)
+    } else {
+      const { status, reason } = result.value
+      misses.push({ restaurant: name, status, reason })
+      console.warn(`${name} ${status}: ${reason}`)
+    }
   })
 
-  if (failed.length) console.error(`failed to refresh: ${failed.join(", ")}`)
-  for (const u of unavailable) console.warn(`${u.restaurant} ${u.status}: ${u.reason}`)
-
-  return { succeeded, unavailable, failed }
+  return { succeeded, unavailable: misses, failed }
 }
 
-export async function refreshRestaurant(db: D1Database, restaurant: Restaurant, now = new Date()): Promise<MenuResult> {
+export async function refreshRestaurant(db: D1Database, restaurant: Restaurant, now: Date): Promise<MenuResult> {
   try {
     let result = await scrape(restaurant, now)
     // The stale row stays as the comparison baseline; deleting it would let the same stale

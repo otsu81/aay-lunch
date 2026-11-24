@@ -1,5 +1,5 @@
 import type { HTMLElement } from "linkedom"
-import type { Menu } from "../weekdays"
+import type { Menu } from "../menu"
 import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
 
 export const Kolgas: HtmlRestaurant = {
@@ -11,16 +11,16 @@ export const Kolgas: HtmlRestaurant = {
     const menu: Menu = {}
 
     for (const header of queryAll(doc, "thead.lunch-day-header")) {
-      const key = parseWeekday(text(query(header, "h3")).split(" ")[0])
+      const day = parseWeekday(text(query(header, "h3")).split(" ")[0])
       const tbody: HTMLElement | null = header.nextElementSibling
-      if (!key || !tbody) continue
+      if (!day || !tbody) continue
 
       const dishes = queryAll(tbody, "td.td_title")
         .map(text)
         .filter(Boolean)
         .map((dish) => ({ text: dish }))
 
-      if (dishes.length) menu[key] = dishes
+      if (dishes.length) menu[day] = dishes
     }
 
     return menu
