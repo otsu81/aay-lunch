@@ -28,7 +28,7 @@ describe("scraper validity", () => {
   })
 
   it("does not read a year as a week number", () => {
-    // "vecka 2026" must not be parsed as week 20; with no real week, the menu is unconfirmed.
+    // "vecka 2026" must not be parsed as week 20.
     expect(menuForCurrentWeek({ thu: "Lunch" }, "Copyright vecka 2026", now)).toMatchObject({
       status: "available",
       periodConfirmed: false,

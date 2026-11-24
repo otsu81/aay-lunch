@@ -40,7 +40,6 @@ export function closed(reason = "restaurant is closed"): MenuResult {
 export function pageIndicatesClosure(text: string) {
   const closure = /semesterstängt|semester stängt|sommarstängt|stängt\s+v\.?\s*\d|semester.{0,250}öppnar åter/gis
   for (const match of text.matchAll(closure)) {
-    // Ignore negated mentions such as "vi har inte sommarstängt".
     const preceding = text.slice(Math.max(0, match.index - 40), match.index)
     if (!/\b(inte|ej|aldrig|utan)\b/i.test(preceding)) return true
   }
