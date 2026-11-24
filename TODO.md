@@ -65,6 +65,14 @@ Defined 9 times today: `index.ts:8`, `db.ts:14`, `dates.ts:4`, `generator.ts:48`
 - Render with `hono/html` so output is escaped by default.
 - Update fixture snapshots deliberately.
 
+### T9. Text extraction bugs found by the T0 snapshots
+
+- Missing space at tag boundaries: Café Live `TORTILLASryggbiff`, MiaMarias `ochbasilikayoghurt`/`Serverasmed`, Niagara `persilja(G)`.
+- Niagara emits raw entities (`&amp;`) because it splits `innerHTML`.
+- Clemens stores `"-"` as Monday's dish; placeholder dishes must be dropped.
+- Välfärden keeps double spaces.
+- Fix in the shared `text()` helper where possible, update snapshots deliberately.
+
 ## Not doing
 
 - Renaming the worker in `wrangler.jsonc`: creates a new prod worker.
