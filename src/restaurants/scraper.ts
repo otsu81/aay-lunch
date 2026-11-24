@@ -17,7 +17,7 @@ export type MenuResult =
 
 export type RefreshStatus = MenuResult["status"] | "failed"
 
-interface RestaurantInfo {
+export interface RestaurantInfo {
   id: number
   name: string
   url: string

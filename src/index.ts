@@ -1,15 +1,15 @@
 import { type Context, Hono } from "hono"
 import { getWeekday } from "./dates"
 import { Db } from "./db"
-import { Generator } from "./generator"
+import { renderWeekdayMenu } from "./page"
 import { restaurants } from "./restaurants/all"
 import { isWeekday, type Weekday } from "./weekdays"
 
 const hono = new Hono<{ Bindings: Env }>()
 
 async function getWeekdayMenu(weekday: Weekday, c: Context<{ Bindings: Env }>) {
-  const gen = new Generator(new Db(c.env.db), restaurants)
-  return c.html(await gen.generateWeekdayMenu(weekday))
+  const rows = await new Db(c.env.db).getWeekdayMenus(weekday)
+  return c.html(renderWeekdayMenu(rows, restaurants, weekday))
 }
 
 async function refreshMenus(db: D1Database) {

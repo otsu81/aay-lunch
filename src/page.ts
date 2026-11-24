@@ -1,81 +1,74 @@
 import { formatDate, formatDateTime } from "./dates"
-import type { Db, WeekdayMenuRow } from "./db"
-import type { Restaurant } from "./restaurants/scraper"
+import type { WeekdayMenuRow } from "./db"
+import type { RestaurantInfo } from "./restaurants/scraper"
 import { type Weekday, weekdays } from "./weekdays"
 
-type Entry = { restaurant: Restaurant; row?: WeekdayMenuRow }
+type Entry = { restaurant: RestaurantInfo; row?: WeekdayMenuRow }
+type ShownRow = WeekdayMenuRow & { dish: string; fetchedAt: string; validFrom: string; validUntil: string }
+type ShownEntry = { restaurant: RestaurantInfo; row: ShownRow }
 
-const link = ({ restaurant }: Entry) =>
-  `<a href="${restaurant.url}" target="_blank" rel="noopener noreferrer">${restaurant.name}</a>`
+const isShown = (entry: Entry): entry is ShownEntry =>
+  !!(entry.row?.dish && entry.row.fetchedAt && entry.row.validFrom && entry.row.validUntil)
 
-export class Generator {
-  constructor(
-    private db: Db,
-    private restaurants: Restaurant[],
-  ) {}
+const link = ({ url, name }: RestaurantInfo, title?: string) =>
+  `<a href="${url}" target="_blank" rel="noopener noreferrer"${title ? ` title="${title}"` : ""}>${name}</a>`
 
-  private parseMenuItems(dish: string): string[] {
-    return dish
-      .split(/<br\s*\/?>/)
-      .map((item) => item.trim())
-      .filter(Boolean)
-  }
+const parseMenuItems = (dish: string) =>
+  dish
+    .split(/<br\s*\/?>/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 
-  private refreshNotice(missing: Entry[], now: Date) {
-    const today = formatDate(now)
-    const isFailed = ({ row }: Entry) =>
-      !!row?.lastAttemptAt && formatDate(new Date(row.lastAttemptAt)) === today && row.lastStatus !== "available"
-    // Closed is a deliberate absence, not a scraper problem.
-    const notClosed = missing.filter(({ row }) => row?.lastStatus !== "closed")
-    const failed = notClosed.filter(isFailed).map(link)
-    const notFetched = notClosed.filter((e) => !isFailed(e)).map(link)
+function refreshNotice(missing: Entry[], now: Date) {
+  const today = formatDate(now)
+  const isFailed = ({ row }: Entry) =>
+    !!row?.lastAttemptAt && formatDate(new Date(row.lastAttemptAt)) === today && row.lastStatus !== "available"
+  // Closed is a deliberate absence, not a scraper problem.
+  const notClosed = missing.filter(({ row }) => row?.lastStatus !== "closed")
+  const failed = notClosed.filter(isFailed).map(({ restaurant }) => link(restaurant))
+  const notFetched = notClosed.filter((e) => !isFailed(e)).map(({ restaurant }) => link(restaurant))
 
-    const lines = [
-      failed.length ? `failed to fetch: ${failed.join(", ")}` : "",
-      notFetched.length ? `not yet fetched for today: ${notFetched.join(", ")}` : "",
-    ].filter(Boolean)
-    return lines.length ? `<p class="refresh-status">${lines.join("<br>")}</p>` : ""
-  }
+  const lines = [
+    failed.length ? `failed to fetch: ${failed.join(", ")}` : "",
+    notFetched.length ? `not yet fetched for today: ${notFetched.join(", ")}` : "",
+  ].filter(Boolean)
+  return lines.length ? `<p class="refresh-status">${lines.join("<br>")}</p>` : ""
+}
 
-  async generateWeekdayMenu(weekday: Weekday, now = new Date()) {
-    const rows = new Map((await this.db.getWeekdayMenus(weekday, now)).map((row) => [row.id, row]))
-    const entries = this.restaurants.map((restaurant) => ({ restaurant, row: rows.get(restaurant.id) }))
-    const shown = entries.filter((e): e is Required<Entry> => !!e.row?.dish)
-    const refreshNotice = this.refreshNotice(
-      entries.filter((e) => !e.row?.dish),
-      now,
-    )
-
-    const weekdayNav = weekdays
-      .map((day) => {
-        const label = day[0].toUpperCase() + day.slice(1)
-        const cls = day === weekday ? "pill active" : "pill"
-        return `<a href="/${day}" class="${cls}">${label}</a>`
-      })
-      .join("")
-
-    const tableRows = shown
-      .map(({ restaurant, row }) => {
-        const listItems = this.parseMenuItems(row.dish ?? "")
-          .map((item) => `<li>${item}</li>`)
-          .join("")
-        const fetchedAt = formatDateTime(new Date(row.fetchedAt ?? ""))
-        const freshness = `Menu fetched ${fetchedAt}; valid ${row.validFrom} through ${row.validUntil}`
-        return `<tr>
-        <td class="restaurant"><a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" title="${freshness}">${restaurant.name}</a></td>
+function tableRow({ restaurant, row }: ShownEntry) {
+  const listItems = parseMenuItems(row.dish)
+    .map((item) => `<li>${item}</li>`)
+    .join("")
+  const freshness = `Menu fetched ${formatDateTime(new Date(row.fetchedAt))}; valid ${row.validFrom} through ${row.validUntil}`
+  return `<tr>
+        <td class="restaurant">${link(restaurant, freshness)}</td>
         <td><ul>${listItems}</ul></td>
       </tr>`
-      })
-      .join("\n")
+}
 
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <title>Mec Lunch</title>
-  <style>
+export function renderWeekdayMenu(
+  rows: WeekdayMenuRow[],
+  restaurants: RestaurantInfo[],
+  weekday: Weekday,
+  now = new Date(),
+) {
+  const rowsById = new Map(rows.map((row) => [row.id, row]))
+  const entries: Entry[] = restaurants.map((restaurant) => ({ restaurant, row: rowsById.get(restaurant.id) }))
+  const shown = entries.filter(isShown)
+  const missing = entries.filter((e) => !isShown(e))
+
+  const weekdayNav = weekdays
+    .map((day) => {
+      const label = day[0].toUpperCase() + day.slice(1)
+      const cls = day === weekday ? "pill active" : "pill"
+      return `<a href="/${day}" class="${cls}">${label}</a>`
+    })
+    .join("")
+
+  return page(weekdayNav, shown.map(tableRow).join("\n"), refreshNotice(missing, now))
+}
+
+const styles = `
     :root {
       --bg: #f5f5f7;
       --table-bg: #fff;
@@ -198,13 +191,22 @@ export class Generator {
       td { display: block; padding: 0.75rem 1rem; }
       td:first-child { padding-bottom: 0.25rem; border-bottom: none; }
     }
-  </style>
+`
+
+const page = (nav: string, tableRows: string, refreshNotice: string) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Mec Lunch</title>
+  <style>${styles}  </style>
 </head>
 <body>
   <header>
     <h1>Mec Lunch</h1>
     <p>What's for lunch around Media Evolution City, Malmö</p>
-    <nav>${weekdayNav}</nav>
+    <nav>${nav}</nav>
   </header>
 
   <main>
@@ -223,6 +225,3 @@ export class Generator {
   </footer>
 </body>
 </html>`
-    return html
-  }
-}
