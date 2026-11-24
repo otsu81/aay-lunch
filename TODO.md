@@ -57,4 +57,4 @@ Defined 9 times today: `index.ts:8`, `db.ts:14`, `dates.ts:4`, `generator.ts:48`
 
 ## Not doing
 - Renaming the worker in `wrangler.jsonc`: creates a new prod worker.
-- Auth on `/refresh`: unauthenticated GET that writes to D1. The 1h `cf` cache bounds upstream load. Acceptable for a toy; decide later.
+- Auth on `/refresh`: already handled outside the repo. Cloudflare Access (email OTP) fronts the whole `lunch.otsu.dev` domain.
