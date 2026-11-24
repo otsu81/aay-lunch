@@ -1,5 +1,28 @@
-import { describe, expect, it } from "vitest"
-import { menuForCurrentWeek, pageIndicatesClosure, parseWeekday } from "./scraper"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { type HtmlRestaurant, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, scrape } from "./scraper"
+
+describe("scrape", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("reports an HTML page announcing a closure as closed", async () => {
+    const restaurant: HtmlRestaurant = {
+      id: 999,
+      name: "Fixture",
+      url: "https://example.com",
+      parse: () => ({ thu: [{ text: "Lunch" }] }),
+    }
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<html><body><h1>Semesterstängt v. 28-32</h1></body></html>"),
+    )
+
+    expect(await scrape(restaurant, new Date("2026-08-06T08:30:00.000Z"))).toEqual({
+      status: "closed",
+      reason: "restaurant is closed",
+    })
+  })
+})
 
 describe("scraper validity", () => {
   const now = new Date("2026-08-06T08:30:00.000Z")

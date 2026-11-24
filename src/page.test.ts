@@ -89,4 +89,20 @@ describe("renderWeekdayMenu", () => {
     expect(html).toContain("<li>&lt;script&gt;alert(1)&lt;/script&gt; &amp; co</li>")
     expect(html).not.toContain("<script>")
   })
+
+  it("escapes a dish label", async () => {
+    const html = await render([restaurant(1)], [row(1, { menu: menu({ label: "<i>Green</i>", text: "Tofu" }) })])
+
+    expect(html).toContain("<li><b>&lt;i&gt;Green&lt;/i&gt;</b>: Tofu</li>")
+  })
+
+  it("escapes the restaurant name and link title", async () => {
+    const html = await render(
+      [{ ...restaurant(1), name: 'R"<1>' }],
+      [row(1, { menu: { ...menu({ text: "Lunch" }), validUntil: '2026-08-07"' } })],
+    )
+
+    expect(html).toContain(">R&quot;&lt;1&gt;</a>")
+    expect(html).toContain('through 2026-08-07&quot;">')
+  })
 })
