@@ -1,20 +1,37 @@
-import { DOMParser } from "linkedom"
+import { DOMParser, type HTMLElement } from "linkedom"
 import { getWeekday, getWeekNumber, getWeekRange } from "../dates"
 import type { Menu, Weekday } from "../weekdays"
 import type { MenuResult } from "./restaurant"
 
 const cacheTtl = 3600
 
-export async function fetchRestaurant(url: string, init: RequestInit = {}) {
-  const response = await fetch(url, { ...init, cf: { cacheTtl } })
+// Some sites reject requests that don't look like a browser.
+const headers = {
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9,sv;q=0.8",
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+}
+
+export async function fetchRestaurant(url: string) {
+  const response = await fetch(url, { headers, cf: { cacheTtl } })
   if (!response.ok) throw new Error(`restaurant fetch failed with HTTP ${response.status}`)
   return response
 }
 
-export async function fetchDocument(url: string, init?: RequestInit) {
-  const res = await fetchRestaurant(url, init)
+export async function fetchDocument(url: string) {
+  const res = await fetchRestaurant(url)
   const doc = new DOMParser().parseFromString(await res.text(), "text/html")
-  return { doc, pageText: doc.documentElement?.textContent || "" }
+  return { doc, pageText: text(doc.documentElement) }
+}
+
+// linkedom types querySelectorAll as `any` or `any[]`; this pins the elements to HTMLElement.
+export function queryAll(root: { querySelectorAll(selector: string): HTMLElement[] }, selector: string): HTMLElement[] {
+  return root.querySelectorAll(selector)
+}
+
+export function text(node?: { textContent: string | null } | null): string {
+  return node?.textContent?.replace(/\s+/g, " ").trim() ?? ""
 }
 
 const weekdayNames: Record<string, Weekday> = {

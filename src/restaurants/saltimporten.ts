@@ -1,7 +1,15 @@
-import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
+import {
+  closed,
+  fetchDocument,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  queryAll,
+  text,
+  unavailable,
+} from "./scraper"
 
 export class Saltimporten implements Restaurant {
   public id = 8
@@ -19,10 +27,10 @@ export class Saltimporten implements Restaurant {
 
     const menu: Menu = {}
 
-    for (const p of container.querySelectorAll("p") as HTMLElement[]) {
+    for (const p of queryAll(container, "p")) {
       const weekday = p.querySelector("strong")
-      const day = parseWeekday(weekday?.textContent)
-      const dish = weekday?.nextSibling?.textContent
+      const day = parseWeekday(text(weekday))
+      const dish = text(weekday?.nextSibling)
       if (day && dish) menu[day] = dish
     }
 

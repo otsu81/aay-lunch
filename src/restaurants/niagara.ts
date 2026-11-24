@@ -1,7 +1,15 @@
-import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
+import {
+  closed,
+  fetchDocument,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  queryAll,
+  text,
+  unavailable,
+} from "./scraper"
 
 export class Niagara implements Restaurant {
   public id = 5
@@ -17,12 +25,12 @@ export class Niagara implements Restaurant {
 
     const menu: Menu = {}
 
-    for (const panel of tabs.querySelectorAll('[role="tabpanel"]') as HTMLElement[]) {
-      const key = parseWeekday(panel.querySelector("h3.elementor-heading-title")?.textContent)
+    for (const panel of queryAll(tabs, '[role="tabpanel"]')) {
+      const key = parseWeekday(text(panel.querySelector("h3.elementor-heading-title")))
       if (!key) continue
 
-      const items = (Array.from(panel.querySelectorAll(".lunchmeny_container")) as HTMLElement[]).map((container) => {
-        const title = container.querySelector(".lunch_title")?.textContent?.trim() ?? ""
+      const items = queryAll(panel, ".lunchmeny_container").map((container) => {
+        const title = text(container.querySelector(".lunch_title"))
         // The description holds the Swedish text first, then an English translation.
         const desc = container.querySelector(".lunch_desc")?.innerHTML.trim().split("<br>")[0] ?? ""
         return `<b>${title}</b>: ${desc}`

@@ -1,7 +1,15 @@
 import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday } from "./scraper"
+import {
+  closed,
+  fetchDocument,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  queryAll,
+  text,
+} from "./scraper"
 
 export class Kolgas implements Restaurant {
   public id = 9
@@ -14,15 +22,12 @@ export class Kolgas implements Restaurant {
 
     const menu: Menu = {}
 
-    for (const header of doc.querySelectorAll("thead.lunch-day-header") as HTMLElement[]) {
-      const dayText = header.querySelector("h3")?.textContent?.trim().split(/\s+/)[0]
-      const key = parseWeekday(dayText)
-      const tbody = header.nextElementSibling as HTMLElement | null
+    for (const header of queryAll(doc, "thead.lunch-day-header")) {
+      const key = parseWeekday(text(header.querySelector("h3")).split(" ")[0])
+      const tbody: HTMLElement | null = header.nextElementSibling
       if (!key || !tbody) continue
 
-      const items = Array.from(tbody.querySelectorAll("td.td_title"))
-        .map((td) => (td as HTMLElement).textContent?.trim() ?? "")
-        .filter(Boolean)
+      const items = queryAll(tbody, "td.td_title").map(text).filter(Boolean)
 
       if (items.length) menu[key] = items.join("<br>")
     }

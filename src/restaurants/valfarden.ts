@@ -1,7 +1,14 @@
-import type { HTMLElement } from "linkedom"
 import type { Menu, Weekday } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
+import {
+  closed,
+  fetchDocument,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  queryAll,
+  unavailable,
+} from "./scraper"
 
 export class Valfarden implements Restaurant {
   public id = 6
@@ -22,7 +29,8 @@ export class Valfarden implements Restaurant {
       if (currentDay) menu[currentDay] = currentDishes.length ? currentDishes.join("<br>") : "Stängt"
     }
 
-    for (const p of section.querySelectorAll("p") as HTMLElement[]) {
+    for (const p of queryAll(section, "p")) {
+      // Not text(): collapsing whitespace changes the stored dishes; T9 switches it deliberately.
       const txt = p.textContent?.normalize("NFC").trim() || ""
       const day = parseWeekday(txt.split(/\s+/)[0])
       if (day) {

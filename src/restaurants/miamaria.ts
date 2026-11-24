@@ -1,7 +1,6 @@
-import type { HTMLElement } from "linkedom"
 import { type Menu, type Weekday, weekdays } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, unavailable } from "./scraper"
+import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, queryAll, text, unavailable } from "./scraper"
 
 export class MiaMarias implements Restaurant {
   public id = 2
@@ -14,22 +13,15 @@ export class MiaMarias implements Restaurant {
 
     const tabsContent = doc.querySelector("div.e-n-tabs-content")
     if (!tabsContent) return unavailable("lunch tabs not found")
-    const dayPanels = Array.from(
-      tabsContent.querySelectorAll(':scope > div[id^="e-n-tab-content-"][role="tabpanel"]'),
-    ) as HTMLElement[]
 
     const menu: Menu = {}
 
-    for (const panel of dayPanels) {
+    for (const panel of queryAll(tabsContent, ':scope > div[id^="e-n-tab-content-"][role="tabpanel"]')) {
       const weekday: Weekday | undefined = weekdays[Number(panel.dataset.tabIndex) - 1]
       if (!weekday) continue
 
-      const dishes = (
-        Array.from(panel.querySelectorAll(":scope > div.e-con-full.e-flex.e-con.e-child")) as HTMLElement[]
-      )
-        .map((dish) =>
-          dish.querySelector(".elementor-widget-text-editor.elementor-widget__width-initial p")?.textContent?.trim(),
-        )
+      const dishes = queryAll(panel, ":scope > div.e-con-full.e-flex.e-con.e-child")
+        .map((dish) => text(dish.querySelector(".elementor-widget-text-editor.elementor-widget__width-initial p")))
         .filter(Boolean)
       if (dishes.length) menu[weekday] = dishes.join("<br>")
     }

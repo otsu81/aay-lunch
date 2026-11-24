@@ -1,9 +1,15 @@
-import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
-
-const clean = (el: HTMLElement | null) => el?.textContent?.replace(/\s+/g, " ").trim()
+import {
+  closed,
+  fetchDocument,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  queryAll,
+  text,
+  unavailable,
+} from "./scraper"
 
 export class P2 implements Restaurant {
   public id = 3
@@ -14,24 +20,22 @@ export class P2 implements Restaurant {
     const { doc, pageText } = await fetchDocument(this.url)
     if (pageIndicatesClosure(pageText)) return closed()
 
-    const dayContainers = Array.from(doc.querySelectorAll(".lunchmeny_wrapper"))
-      .map((wrapper) => (wrapper as HTMLElement).closest(".e-con") as HTMLElement | null)
-      .filter((c): c is HTMLElement => !!c)
+    const dayContainers = queryAll(doc, ".lunchmeny_wrapper")
+      .map((wrapper) => wrapper.closest(".e-con"))
+      .filter(Boolean)
     if (!dayContainers.length) return unavailable("lunch menu containers not found")
 
     const menu: Menu = {}
 
     for (const container of dayContainers) {
-      const day = parseWeekday(container.querySelector("h3.elementor-heading-title")?.textContent)
+      const day = parseWeekday(text(container.querySelector("h3.elementor-heading-title")))
       if (!day) continue
 
-      const items = (Array.from(container.querySelectorAll(".lunchmeny_container")) as HTMLElement[]).flatMap(
-        (item) => {
-          const title = clean(item.querySelector(".lunch_title"))
-          const desc = clean(item.querySelector(".lunch_desc"))
-          return title && desc ? [`<b>${title}</b>: ${desc}`] : []
-        },
-      )
+      const items = queryAll(container, ".lunchmeny_container").flatMap((item) => {
+        const title = text(item.querySelector(".lunch_title"))
+        const desc = text(item.querySelector(".lunch_desc"))
+        return title && desc ? [`<b>${title}</b>: ${desc}`] : []
+      })
 
       if (items.length) menu[day] = items.join("<br>")
     }

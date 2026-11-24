@@ -1,7 +1,16 @@
 import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
 import type { MenuResult, Restaurant } from "./restaurant"
-import { closed, fetchDocument, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, unavailable } from "./scraper"
+import {
+  closed,
+  fetchDocument,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  queryAll,
+  text,
+  unavailable,
+} from "./scraper"
 
 export class CafeLive implements Restaurant {
   public id = 7
@@ -12,26 +21,25 @@ export class CafeLive implements Restaurant {
     const { doc, pageText } = await fetchDocument(this.url)
     if (pageIndicatesClosure(pageText)) return closed()
 
-    const headings = Array.from(doc.querySelectorAll("h1, h2, h3, h4, h5, h6")) as HTMLElement[]
-    const heading = headings.find((h) => /\bmeny\b/i.test(h.textContent || ""))
+    const heading = queryAll(doc, "h1, h2, h3, h4, h5, h6").find((h) => /\bmeny\b/i.test(text(h)))
     if (!heading) return unavailable("lunch heading not found")
 
     const menu: Menu = {}
 
     for (
-      let current = heading.nextElementSibling as HTMLElement | null;
+      let current: HTMLElement | null = heading.nextElementSibling;
       current && current.id !== "lunch-meny";
-      current = current.nextElementSibling as HTMLElement | null
+      current = current.nextElementSibling
     ) {
       if (current.tagName?.toLowerCase() !== "p" || !current.querySelector("strong")) continue
 
       // Day labels are sometimes split across several <strong> tags (e.g. an empty &nbsp;
       // one first), so read the whole paragraph.
-      const dayKey = parseWeekday(current.textContent)
+      const dayKey = parseWeekday(text(current))
       if (!dayKey) continue
 
-      const dishEl = current.nextElementSibling as HTMLElement | null
-      const dish = dishEl?.tagName?.toLowerCase() === "p" ? dishEl.textContent?.replace(/\s+/g, " ").trim() : undefined
+      const dishEl: HTMLElement | null = current.nextElementSibling
+      const dish = dishEl?.tagName?.toLowerCase() === "p" ? text(dishEl) : ""
       if (dish) menu[dayKey] = dish
     }
 
