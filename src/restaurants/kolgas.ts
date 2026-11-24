@@ -1,29 +1,17 @@
 import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
-import type { MenuResult, Restaurant } from "./restaurant"
-import {
-  closed,
-  fetchDocument,
-  menuForCurrentWeek,
-  pageIndicatesClosure,
-  parseWeekday,
-  queryAll,
-  text,
-} from "./scraper"
+import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
 
-export class Kolgas implements Restaurant {
-  public id = 9
-  public restaurantName = "Kolgas"
-  public url = "https://www.restaurangkolga.se/lunch/"
+export const Kolgas: HtmlRestaurant = {
+  id: 9,
+  name: "Kolgas",
+  url: "https://www.restaurangkolga.se/lunch/",
 
-  async generateMenu(now = new Date()): Promise<MenuResult> {
-    const { doc, pageText } = await fetchDocument(this.url)
-    if (pageIndicatesClosure(pageText)) return closed()
-
+  parse(doc) {
     const menu: Menu = {}
 
     for (const header of queryAll(doc, "thead.lunch-day-header")) {
-      const key = parseWeekday(text(header.querySelector("h3")).split(" ")[0])
+      const key = parseWeekday(text(query(header, "h3")).split(" ")[0])
       const tbody: HTMLElement | null = header.nextElementSibling
       if (!key || !tbody) continue
 
@@ -32,6 +20,6 @@ export class Kolgas implements Restaurant {
       if (items.length) menu[key] = items.join("<br>")
     }
 
-    return menuForCurrentWeek(menu, pageText, now)
-  }
+    return menu
+  },
 }

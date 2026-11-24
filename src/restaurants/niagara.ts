@@ -1,44 +1,30 @@
 import type { Menu } from "../weekdays"
-import type { MenuResult, Restaurant } from "./restaurant"
-import {
-  closed,
-  fetchDocument,
-  menuForCurrentWeek,
-  pageIndicatesClosure,
-  parseWeekday,
-  queryAll,
-  text,
-  unavailable,
-} from "./scraper"
+import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
 
-export class Niagara implements Restaurant {
-  public id = 5
-  public restaurantName = "Niagara"
-  public url = "https://restaurangniagara.se/lunch/"
+export const Niagara: HtmlRestaurant = {
+  id: 5,
+  name: "Niagara",
+  url: "https://restaurangniagara.se/lunch/",
 
-  async generateMenu(now = new Date()): Promise<MenuResult> {
-    const { doc, pageText } = await fetchDocument(this.url)
-    if (pageIndicatesClosure(pageText)) return closed()
-
-    const tabs = doc.querySelector(".e-n-tabs")
-    if (!tabs) return unavailable("lunch tabs not found")
-
+  parse(doc) {
     const menu: Menu = {}
+    const tabs = query(doc, ".e-n-tabs")
+    if (!tabs) return menu
 
     for (const panel of queryAll(tabs, '[role="tabpanel"]')) {
-      const key = parseWeekday(text(panel.querySelector("h3.elementor-heading-title")))
+      const key = parseWeekday(text(query(panel, "h3.elementor-heading-title")))
       if (!key) continue
 
       const items = queryAll(panel, ".lunchmeny_container").map((container) => {
-        const title = text(container.querySelector(".lunch_title"))
+        const title = text(query(container, ".lunch_title"))
         // The description holds the Swedish text first, then an English translation.
-        const desc = container.querySelector(".lunch_desc")?.innerHTML.trim().split("<br>")[0] ?? ""
+        const desc = query(container, ".lunch_desc")?.innerHTML.trim().split("<br>")[0] ?? ""
         return `<b>${title}</b>: ${desc}`
       })
 
       menu[key] = items.join("<br>")
     }
 
-    return menuForCurrentWeek(menu, pageText, now)
-  }
+    return menu
+  },
 }

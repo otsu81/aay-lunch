@@ -1,31 +1,18 @@
 import type { Menu, Weekday } from "../weekdays"
-import type { MenuResult, Restaurant } from "./restaurant"
-import {
-  closed,
-  fetchDocument,
-  menuForCurrentWeek,
-  pageIndicatesClosure,
-  parseWeekday,
-  queryAll,
-  text,
-  unavailable,
-} from "./scraper"
+import { type HtmlRestaurant, parseWeekday, queryAll, text } from "./scraper"
 
-export class Varv implements Restaurant {
-  public id = 0
-  public restaurantName = "Varv Malmö"
-  public url = "https://www.varvmalmo.com/menu"
+export const Varv: HtmlRestaurant = {
+  id: 0,
+  name: "Varv Malmö",
+  url: "https://www.varvmalmo.com/menu",
 
-  async generateMenu(now = new Date()): Promise<MenuResult> {
-    const { doc, pageText } = await fetchDocument(this.url)
-    if (pageIndicatesClosure(pageText)) return closed()
-
+  parse(doc) {
+    const menu: Menu = {}
     const menuContent = queryAll(doc, ".sqs-html-content").find((content) =>
       queryAll(content, "h2").some((heading) => parseWeekday(text(heading))),
     )
-    if (!menuContent) return unavailable("lunch menu content not found")
+    if (!menuContent) return menu
 
-    const menu: Menu = {}
     let currentDay: Weekday | undefined
 
     for (const child of queryAll(menuContent, ":scope > *")) {
@@ -51,6 +38,6 @@ export class Varv implements Restaurant {
       menu[currentDay] = menu[currentDay] ? `${menu[currentDay]}<br>${line}` : line
     }
 
-    return menuForCurrentWeek(menu, pageText, now)
-  }
+    return menu
+  },
 }

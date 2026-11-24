@@ -20,7 +20,7 @@ async function refreshMenus(db: D1Database) {
   const unavailable: { restaurant: string; status: string; reason: string }[] = []
   const failed: string[] = []
   results.forEach((result, i) => {
-    const name = restaurants[i].restaurantName
+    const name = restaurants[i].name
     if (result.status === "rejected") failed.push(name)
     else if (result.value.status === "available") succeeded.push(name)
     else unavailable.push({ restaurant: name, status: result.value.status, reason: result.value.reason })

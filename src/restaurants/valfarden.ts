@@ -1,28 +1,16 @@
 import type { Menu, Weekday } from "../weekdays"
-import type { MenuResult, Restaurant } from "./restaurant"
-import {
-  closed,
-  fetchDocument,
-  menuForCurrentWeek,
-  pageIndicatesClosure,
-  parseWeekday,
-  queryAll,
-  unavailable,
-} from "./scraper"
+import { type HtmlRestaurant, parseWeekday, query, queryAll } from "./scraper"
 
-export class Valfarden implements Restaurant {
-  public id = 6
-  public restaurantName = "Välfärden"
-  public url = "https://valfarden.nu/dagens-lunch/"
+export const Valfarden: HtmlRestaurant = {
+  id: 6,
+  name: "Välfärden",
+  url: "https://valfarden.nu/dagens-lunch/",
 
-  async generateMenu(now = new Date()): Promise<MenuResult> {
-    const { doc, pageText } = await fetchDocument(this.url)
-    if (pageIndicatesClosure(pageText)) return closed()
-
-    const section = doc.querySelector("article section:nth-of-type(2)")
-    if (!section) return unavailable("lunch section not found")
-
+  parse(doc) {
     const menu: Menu = {}
+    const section = query(doc, "article section:nth-of-type(2)")
+    if (!section) return menu
+
     let currentDay: Weekday | undefined
     let currentDishes: string[] = []
     const flush = () => {
@@ -43,6 +31,6 @@ export class Valfarden implements Restaurant {
     }
     flush()
 
-    return menuForCurrentWeek(menu, pageText, now)
-  }
+    return menu
+  },
 }

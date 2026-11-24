@@ -1,12 +1,12 @@
 import { formatDate, formatDateTime } from "./dates"
 import type { Db, WeekdayMenuRow } from "./db"
-import type { Restaurant } from "./restaurants/restaurant"
+import type { Restaurant } from "./restaurants/scraper"
 import { type Weekday, weekdays } from "./weekdays"
 
 type Entry = { restaurant: Restaurant; row?: WeekdayMenuRow }
 
 const link = ({ restaurant }: Entry) =>
-  `<a href="${restaurant.url}" target="_blank" rel="noopener noreferrer">${restaurant.restaurantName}</a>`
+  `<a href="${restaurant.url}" target="_blank" rel="noopener noreferrer">${restaurant.name}</a>`
 
 export class Generator {
   constructor(
@@ -62,7 +62,7 @@ export class Generator {
         const fetchedAt = formatDateTime(new Date(row.fetchedAt ?? ""))
         const freshness = `Menu fetched ${fetchedAt}; valid ${row.validFrom} through ${row.validUntil}`
         return `<tr>
-        <td class="restaurant"><a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" title="${freshness}">${restaurant.restaurantName}</a></td>
+        <td class="restaurant"><a href="${restaurant.url}" target="_blank" rel="noopener noreferrer" title="${freshness}">${restaurant.name}</a></td>
         <td><ul>${listItems}</ul></td>
       </tr>`
       })

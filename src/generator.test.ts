@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { Db, WeekdayMenuRow } from "./db"
 import { Generator } from "./generator"
-import type { Restaurant } from "./restaurants/restaurant"
+import type { Restaurant } from "./restaurants/scraper"
 
 const thursday = new Date("2026-08-06T10:00:00.000Z")
 const today = "2026-08-06T08:30:00.000Z"
@@ -10,7 +10,7 @@ const yesterday = "2026-08-05T08:30:00.000Z"
 function restaurant(id: number): Restaurant {
   return {
     id,
-    restaurantName: `R${id}`,
+    name: `R${id}`,
     url: `https://r${id}.example`,
     generateMenu: async () => ({ status: "closed", reason: "" }),
   }

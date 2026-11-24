@@ -1,12 +1,12 @@
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 import { Db } from "./db"
-import type { MenuResult, Restaurant } from "./restaurants/restaurant"
+import type { MenuResult, Restaurant } from "./restaurants/scraper"
 
 const monday = new Date("2026-08-03T08:30:00.000Z")
 
 function fixture(id: number, generateMenu: () => Promise<MenuResult>): Restaurant {
-  return { id, restaurantName: `Fixture ${id}`, url: "https://example.com", generateMenu }
+  return { id, name: `Fixture ${id}`, url: "https://example.com", generateMenu }
 }
 
 async function seedMenu(id: number, dish: string, validFrom = "2026-08-03", validUntil = "2026-08-07") {

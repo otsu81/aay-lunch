@@ -1,6 +1,5 @@
 import { type Weekday, weekdays } from "../weekdays"
-import type { MenuResult, Restaurant } from "./restaurant"
-import { fetchRestaurant, menuForDate, unavailable } from "./scraper"
+import { type CustomRestaurant, fetchRestaurant, menuForDate, unavailable } from "./scraper"
 
 interface SpillAcf {
   datum?: string
@@ -36,17 +35,17 @@ function mergeParentheticalLines(lines: string[]) {
   }, [])
 }
 
-export class Spill implements Restaurant {
-  public id = 1
-  public restaurantName = "Spill Dockan"
-  public url = "https://www.restaurangspill.se/"
-  private pageUrl = "https://cms.restaurangspill.se/wp-json/wp/v2/pages/12?_fields=acf,modified"
+export const spillApiUrl = "https://cms.restaurangspill.se/wp-json/wp/v2/pages/12?_fields=acf,modified"
 
-  async generateMenu(): Promise<MenuResult> {
-    const res = await fetchRestaurant(this.pageUrl)
+export const Spill: CustomRestaurant = {
+  id: 1,
+  name: "Spill Dockan",
+  url: "https://www.restaurangspill.se/",
+
+  async generateMenu() {
+    const res = await fetchRestaurant(spillApiUrl)
     const page = (await res.json()) as SpillPage
-    const { acf } = page
-    const { datum, dagens_primar, dagens_veg } = acf
+    const { datum, dagens_primar, dagens_veg } = page.acf
     if (!datum) return unavailable("source date is missing")
     const date = datum.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3")
 
@@ -62,5 +61,5 @@ export class Spill implements Restaurant {
     const day: Weekday | undefined = weekdays[new Date(date).getUTCDay() - 1]
     if (!day) return unavailable("source date is not a weekday")
     return menuForDate({ [day]: lines.join("<br>") }, date)
-  }
+  },
 }

@@ -1,7 +1,49 @@
 import { DOMParser, type HTMLElement } from "linkedom"
 import { getWeekday, getWeekNumber, getWeekRange } from "../dates"
 import type { Menu, Weekday } from "../weekdays"
-import type { MenuResult } from "./restaurant"
+
+export type MenuResult =
+  | {
+      status: "available"
+      menu: Menu
+      validFrom: string
+      validUntil: string
+      periodConfirmed: boolean
+    }
+  | {
+      status: "closed" | "unavailable"
+      reason: string
+    }
+
+export type RefreshStatus = MenuResult["status"] | "failed"
+
+interface RestaurantInfo {
+  id: number
+  name: string
+  url: string
+}
+
+export interface HtmlRestaurant extends RestaurantInfo {
+  parse(doc: QueryRoot): Menu
+}
+
+// For sources the HTML pipeline can't handle, e.g. Spill's JSON API with a single-date menu.
+export interface CustomRestaurant extends RestaurantInfo {
+  generateMenu(now: Date): Promise<MenuResult>
+}
+
+export type Restaurant = HtmlRestaurant | CustomRestaurant
+
+export async function scrape(restaurant: Restaurant, now: Date): Promise<MenuResult> {
+  // Without `await`, a rejection sits unhandled for a tick and workerd reports it.
+  if ("generateMenu" in restaurant) return await restaurant.generateMenu(now)
+
+  const response = await fetchRestaurant(restaurant.url)
+  const doc = new DOMParser().parseFromString(await response.text(), "text/html")
+  const pageText = text(doc.documentElement)
+  if (pageIndicatesClosure(pageText)) return { status: "closed", reason: "restaurant is closed" }
+  return menuForCurrentWeek(restaurant.parse(doc), pageText, now)
+}
 
 const cacheTtl = 3600
 
@@ -19,14 +61,17 @@ export async function fetchRestaurant(url: string) {
   return response
 }
 
-export async function fetchDocument(url: string) {
-  const res = await fetchRestaurant(url)
-  const doc = new DOMParser().parseFromString(await res.text(), "text/html")
-  return { doc, pageText: text(doc.documentElement) }
+// linkedom types querySelector/querySelectorAll as `any`; these pin the results to HTMLElement.
+export interface QueryRoot {
+  querySelector(selector: string): HTMLElement | null
+  querySelectorAll(selector: string): HTMLElement[]
 }
 
-// linkedom types querySelectorAll as `any` or `any[]`; this pins the elements to HTMLElement.
-export function queryAll(root: { querySelectorAll(selector: string): HTMLElement[] }, selector: string): HTMLElement[] {
+export function query(root: QueryRoot, selector: string): HTMLElement | null {
+  return root.querySelector(selector)
+}
+
+export function queryAll(root: QueryRoot, selector: string): HTMLElement[] {
   return root.querySelectorAll(selector)
 }
 
@@ -56,10 +101,6 @@ export function unavailable(reason: string): MenuResult {
   return { status: "unavailable", reason }
 }
 
-export function closed(reason = "restaurant is closed"): MenuResult {
-  return { status: "closed", reason }
-}
-
 export function pageIndicatesClosure(text: string) {
   const closure = /semesterstängt|semester stängt|sommarstängt|stängt\s+v\.?\s*\d|semester.{0,250}öppnar åter/gis
   for (const match of text.matchAll(closure)) {
@@ -69,7 +110,7 @@ export function pageIndicatesClosure(text: string) {
   return false
 }
 
-export function menuForCurrentWeek(menu: Menu, pageText: string, now = new Date()): MenuResult {
+export function menuForCurrentWeek(menu: Menu, pageText: string, now: Date): MenuResult {
   if (!Object.values(menu).some((dish) => dish.trim())) return unavailable("no weekday menu parsed")
 
   const sourceWeeks = Array.from(

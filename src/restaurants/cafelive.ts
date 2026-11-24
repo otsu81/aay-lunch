@@ -1,37 +1,23 @@
 import type { HTMLElement } from "linkedom"
 import type { Menu } from "../weekdays"
-import type { MenuResult, Restaurant } from "./restaurant"
-import {
-  closed,
-  fetchDocument,
-  menuForCurrentWeek,
-  pageIndicatesClosure,
-  parseWeekday,
-  queryAll,
-  text,
-  unavailable,
-} from "./scraper"
+import { type HtmlRestaurant, parseWeekday, query, queryAll, text } from "./scraper"
 
-export class CafeLive implements Restaurant {
-  public id = 7
-  public restaurantName = "Café Live"
-  public url = "https://cafelive.se/"
+export const CafeLive: HtmlRestaurant = {
+  id: 7,
+  name: "Café Live",
+  url: "https://cafelive.se/",
 
-  async generateMenu(now = new Date()): Promise<MenuResult> {
-    const { doc, pageText } = await fetchDocument(this.url)
-    if (pageIndicatesClosure(pageText)) return closed()
-
-    const heading = queryAll(doc, "h1, h2, h3, h4, h5, h6").find((h) => /\bmeny\b/i.test(text(h)))
-    if (!heading) return unavailable("lunch heading not found")
-
+  parse(doc) {
     const menu: Menu = {}
+    const heading = queryAll(doc, "h1, h2, h3, h4, h5, h6").find((h) => /\bmeny\b/i.test(text(h)))
+    if (!heading) return menu
 
     for (
       let current: HTMLElement | null = heading.nextElementSibling;
       current && current.id !== "lunch-meny";
       current = current.nextElementSibling
     ) {
-      if (current.tagName?.toLowerCase() !== "p" || !current.querySelector("strong")) continue
+      if (current.tagName?.toLowerCase() !== "p" || !query(current, "strong")) continue
 
       // Day labels are sometimes split across several <strong> tags (e.g. an empty &nbsp;
       // one first), so read the whole paragraph.
@@ -43,6 +29,6 @@ export class CafeLive implements Restaurant {
       if (dish) menu[dayKey] = dish
     }
 
-    return menuForCurrentWeek(menu, pageText, now)
-  }
+    return menu
+  },
 }

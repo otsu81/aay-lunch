@@ -10,10 +10,12 @@ import saltimporten from "./fixtures/saltimporten.html?raw"
 import spill from "./fixtures/spill.json?raw"
 import valfarden from "./fixtures/valfarden.html?raw"
 import varv from "./fixtures/varv.html?raw"
+import { scrape } from "./scraper"
+import { spillApiUrl } from "./spill"
 
 const fixtures: Record<string, string> = {
   "https://www.varvmalmo.com/menu": varv,
-  "https://cms.restaurangspill.se/wp-json/wp/v2/pages/12?_fields=acf,modified": spill,
+  [spillApiUrl]: spill,
   "https://miamarias.nu/lunch/": miamaria,
   "https://restaurangp2.se/": p2,
   "https://www.clemenskott.se/restaurang/": clemens,
@@ -31,13 +33,13 @@ describe("restaurant fixtures", () => {
     vi.restoreAllMocks()
   })
 
-  it.each(restaurants.map((r) => [r.restaurantName, r] as const))("parses %s", async (_, restaurant) => {
+  it.each(restaurants.map((r) => [r.name, r] as const))("parses %s", async (_, restaurant) => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const body = fixtures[String(input)]
       if (body === undefined) throw new Error(`no fixture for ${input}`)
       return new Response(body)
     })
 
-    expect(await restaurant.generateMenu(tuesdayWeek48)).toMatchSnapshot()
+    expect(await scrape(restaurant, tuesdayWeek48)).toMatchSnapshot()
   })
 })

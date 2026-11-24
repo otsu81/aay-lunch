@@ -1,5 +1,5 @@
 import { getWeekdayDate } from "./dates"
-import type { MenuResult, RefreshStatus, Restaurant } from "./restaurants/restaurant"
+import { type MenuResult, type RefreshStatus, type Restaurant, scrape } from "./restaurants/scraper"
 import { isWeekday, type Menu, type Weekday, weekdays } from "./weekdays"
 
 export interface WeekdayMenuRow {
@@ -20,7 +20,7 @@ export class Db {
       .prepare(
         "INSERT INTO restaurants(id, name, url) VALUES (?, ?, ?) ON CONFLICT (id) DO UPDATE SET name=excluded.name, url=excluded.url",
       )
-      .bind(restaurant.id, restaurant.restaurantName, restaurant.url)
+      .bind(restaurant.id, restaurant.name, restaurant.url)
       .run()
 
     let result: MenuResult
@@ -44,7 +44,7 @@ export class Db {
   private async storeMenu(restaurant: Restaurant, now: Date): Promise<MenuResult> {
     // Throws and non-closed misses leave the stored menu untouched, so a transient failure
     // can't blank a still-valid menu. The validity window hides it once its week passes.
-    const result = await restaurant.generateMenu(now)
+    const result = await scrape(restaurant, now)
 
     if (result.status === "closed") {
       await this.db.prepare("DELETE FROM menus WHERE restaurant_id = ?").bind(restaurant.id).run()
@@ -88,7 +88,7 @@ export class Db {
       )
       .run()
 
-    console.log(`restaurant "${restaurant.restaurantName}" menu refreshed`)
+    console.log(`restaurant "${restaurant.name}" menu refreshed`)
     return result
   }
 
