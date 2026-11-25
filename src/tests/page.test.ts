@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import type { DayMenu, WeekdayMenuRow } from "./db"
-import type { Dish, RestaurantInfo } from "./menu"
-import { renderWeekdayMenu } from "./page"
+import type { DayMenu, WeekdayMenuRow } from "../db"
+import type { Dish, RestaurantInfo } from "../menu"
+import { renderWeekdayMenu } from "../page"
 
 const thursday = new Date("2026-08-06T10:00:00.000Z")
 const today = "2026-08-06T08:30:00.000Z"

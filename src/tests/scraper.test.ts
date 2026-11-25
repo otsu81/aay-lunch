@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { type HtmlRestaurant, menuForCurrentWeek, pageIndicatesClosure, parseWeekday, scrape } from "./scraper"
+import {
+  type HtmlRestaurant,
+  menuForCurrentWeek,
+  pageIndicatesClosure,
+  parseWeekday,
+  scrape,
+} from "../restaurants/scraper"
 
 describe("scrape", () => {
   afterEach(() => {

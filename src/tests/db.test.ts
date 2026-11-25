@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
-import { getWeekdayMenus, recordAttempt, upsertMenu } from "./db"
+import { getWeekdayMenus, recordAttempt, upsertMenu } from "../db"
 
 describe("getWeekdayMenus", () => {
   it("only returns dishes valid for the requested week", async () => {

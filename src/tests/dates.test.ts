@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { getWeekday, getWeekRange } from "./dates"
+import { getWeekday, getWeekRange } from "../dates"
 
 describe("Stockholm day boundary", () => {
   const sundayNightUtc = new Date("2026-11-29T23:30:00.000Z")

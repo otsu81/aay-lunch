@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import app from "./index"
-import { restaurants } from "./restaurants/all"
+import app from "../index"
+import { restaurants } from "../restaurants/all"
 
 describe("worker integration", () => {
   afterEach(() => {
